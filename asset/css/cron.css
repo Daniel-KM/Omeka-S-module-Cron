@@ -1,0 +1,6 @@
+@media all {
+    .cron .subhead::before,
+    .cron .no-resources::before {
+        content: "\f017"; /* fa-clock */
+    }
+}

@@ -1,0 +1,84 @@
+<?php
+/**
+ * @var \Laminas\View\Renderer\PhpRenderer $this
+ * @var \Cron\Form\CronForm $form
+ * @var int|null $lastRun
+ * @var string $cronCommand
+ * @var array $registeredTasks
+ * @var bool $hasEasyAdmin
+ */
+
+$plugins = $this->getHelperPluginManager();
+$i18n = $plugins->get('i18n');
+$translate = $plugins->get('translate');
+$escapeHtml = $plugins->get('escapeHtml');
+$assetUrl = $plugins->get('assetUrl');
+
+$this->headLink()
+    ->appendStylesheet($assetUrl('css/cron.css', 'Cron'));
+
+$form->prepare();
+
+$this->htmlElement('body')->appendAttribute('class', 'cron browse');
+?>
+
+<?php if ($hasEasyAdmin): ?>
+    <?= $this->pageTitle($translate('Regular tasks'), 1, $translate('Easy Admin')) ?>
+    <nav class="section-nav">
+        <?= $this->navigation('Laminas\Navigation\EasyAdmin')->menu() ?>
+    </nav>
+<?php else: ?>
+    <?= $this->pageTitle($translate('Scheduled Tasks')) ?>
+<?php endif; ?>
+
+<?php if (!count($registeredTasks)): ?>
+    <div class="no-resources messages">
+        <p class="warning">
+            <?= $translate('No tasks are registered. Install modules that provide cron tasks, for example EasyAdmin for session cleanup.') ?>
+        </p>
+    </div>
+<?php endif; ?>
+
+<div class="cron-info">
+    <h2><?= $translate('Status') ?></h2>
+    <dl>
+        <dt><?= $translate('Last execution') ?></dt>
+        <dd>
+            <?php if ($lastRun): ?>
+                <?= $escapeHtml($i18n->dateFormat((new DateTime)->setTimestamp($lastRun), 'long', 'medium')) ?>
+            <?php else: ?>
+                <em><?= $translate('Never') ?></em>
+            <?php endif; ?>
+        </dd>
+    </dl>
+</div>
+
+<div class="cron-help">
+    <h2><?= $translate('Server cron command') ?></h2>
+    <p class="explanation">
+        <?= $translate('For best results, configure a server cron job. This ensures tasks run reliably, even when no one visits the site.') ?>
+    </p>
+    <pre class="cron-command"><?= $escapeHtml($cronCommand) ?></pre>
+    <p class="explanation">
+        <?= $translate('Without server cron, tasks will run on page load based on the configured frequency.') ?>
+    </p>
+</div>
+
+<?= $this->form()->openTag($form) ?>
+<div id="page-actions">
+    <?php if (count($registeredTasks)): ?>
+        <button type="submit" name="run_now" value="1" class="button"><?= $translate('Run now') ?></button>
+    <?php endif; ?>
+    <button type="submit" class="button"><?= $translate('Save') ?></button>
+</div>
+
+<?php if (count($registeredTasks)): ?>
+    <fieldset id="cron-tasks-fieldset">
+        <legend><?= $translate('Task configuration') ?></legend>
+        <?= $this->formCollection($form) ?>
+    </fieldset>
+<?php else: ?>
+    <?= $this->formCollection($form) ?>
+<?php endif; ?>
+
+<?= $this->form()->closeTag() ?>

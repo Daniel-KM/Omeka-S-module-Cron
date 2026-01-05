@@ -1,0 +1,45 @@
+{
+    "name": "daniel-km/omeka-s-module-cron",
+    "description": "Module for Omeka S that implements a basic cron via page loading and an advanced cron via system or web cron, that can be used by other modules.",
+    "type": "library",
+    "license": "CECILL-2.1",
+    "authors": [
+        {
+            "name": "Daniel Berthereau",
+            "email": "Daniel.packagist@Berthereau.net"
+        }
+    ],
+    "homepage": "https://gitlab.com/Daniel-KM/Omeka-S-module-Cron",
+    "support": {
+        "issues": "https://gitlab.com/Daniel-KM/Omeka-S-module-Cron/-/issues",
+        "forum": "https://forum.omeka.org/"
+    },
+    "keywords": [
+        "Omeka S",
+        "module",
+        "admin",
+        "cron"
+    ],
+    "autoload": {
+        "psr-4": {
+            "Cron\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "CronTest\\": "test/CronTest/"
+        }
+    },
+    "config": {
+        "platform": {
+            "php": "7.4"
+        },
+        "allow-plugins": {
+            "composer/installers": true,
+            "oomphinc/composer-installers-extender": true
+        }
+    },
+    "extra": {
+        "installer-name" : "Cron"
+    }
+}
