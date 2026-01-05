@@ -34,6 +34,15 @@ it in the `modules` directory.
 If the module was installed from the source, rename the name of the folder of
 the module to `Cron`.
 
+- For test
+
+The module includes a comprehensive test suite with unit and functional tests.
+Run them from the root of Omeka:
+
+```sh
+vendor/bin/phpunit -c modules/Cron/test/phpunit.xml --testdox
+```
+
 
 Configuration
 -------------
