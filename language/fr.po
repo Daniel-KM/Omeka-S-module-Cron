@@ -1,0 +1,242 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-01-08 10:39+0100\n"
+"PO-Revision-Date: 2026-01-08 10:41+0100\n"
+"Last-Translator: Daniel Berthereau <Daniel.fr@Berthereau.net>\n"
+"Language-Team: \n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.6\n"
+
+#: view/cron/admin/cron/index.phtml:26
+msgid "Regular tasks"
+msgstr "Tâches régulières"
+
+#: view/cron/admin/cron/index.phtml:26
+msgid "Easy Admin"
+msgstr "Easy Admin"
+
+#: view/cron/admin/cron/index.phtml:31
+msgid "Scheduled Tasks"
+msgstr ""
+
+#: view/cron/admin/cron/index.phtml:37
+msgid ""
+"No tasks are registered. Install modules that provide cron tasks, for "
+"example EasyAdmin for session cleanup."
+msgstr ""
+
+#: view/cron/admin/cron/index.phtml:45
+msgid "Last execution"
+msgstr ""
+
+#: view/cron/admin/cron/index.phtml:57
+msgid "Server cron command"
+msgstr ""
+
+#: view/cron/admin/cron/index.phtml:59
+msgid ""
+"For best results, configure a server cron job. This ensures tasks run "
+"reliably, even when no one visits the site."
+msgstr ""
+
+#: view/cron/admin/cron/index.phtml:63
+msgid ""
+"Without server cron, tasks will run on page load based on the configured "
+"frequency."
+msgstr ""
+
+#: view/cron/admin/cron/index.phtml:70
+msgid "Run now"
+msgstr ""
+
+#: view/cron/admin/cron/index.phtml:77
+msgid "Task configuration"
+msgstr ""
+
+#: data/scripts/cron.php:26
+msgid ""
+"Usage: php modules/Cron/data/scripts/cron.php [arguments]\n"
+"\n"
+"Required arguments:\n"
+"  -u --user-id [#id]\n"
+"        The Omeka user id for permissions (typically 1 for admin).\n"
+"\n"
+"Recommended arguments:\n"
+"  -s --server-url [url]\n"
+"        The url of the server to build resource urls (default:\n"
+"        \"http://localhost\").\n"
+"\n"
+"  -b --base-path [path]\n"
+"        The path to complete the server url (default: \"/\").\n"
+"\n"
+"Optional arguments:\n"
+"  -a --args [json]\n"
+"        Additional arguments to pass to the cron job as JSON.\n"
+"\n"
+"  -k --as-task\n"
+"        Run as a simple task without creating a job record.\n"
+"        Useful for frequent lightweight operations.\n"
+"\n"
+"Other arguments:\n"
+"  -h --help\n"
+"        This help."
+msgstr ""
+
+#: data/scripts/cron.php:68
+#, php-format
+msgid "The script \"%s\" must be run from the command line."
+msgstr "Le script « %s » doit être lancé depuis la ligne de commandes."
+
+#: data/scripts/cron.php:104
+msgid "The job arguments are not a valid json object."
+msgstr "Les arguments de la tâche ne sont pas un objet json valide."
+
+#: data/scripts/cron.php:124
+msgid "The user id must be set and exist."
+msgstr "L’id de l’utilisateur doit être indiqué et exister."
+
+#: data/scripts/cron.php:141
+msgid ""
+"Database is not available. Check if php-mysql is installed with the php "
+"version available on cli."
+msgstr ""
+"Les bases de données ne sont pas disponibles. Vérifiez si php-mysql est "
+"installé avec la version php utilisée en ligne de commandes."
+
+#: data/scripts/cron.php:145
+msgid "The database does not exist."
+msgstr "La base de données n’existe pas."
+
+#: data/scripts/cron.php:154
+#, php-format
+msgid "The user #%d does not exist."
+msgstr ""
+
+#: data/scripts/cron.php:172
+msgid "No server url passed, so use: --server-url \"http://localhost\""
+msgstr ""
+"L’url du serveur n’est pas indiquée. Utilisation de : --server-url "
+"\"http://localhost\""
+
+#: data/scripts/cron.php:181
+msgid "No base path passed, so use: --base-path \"/\""
+msgstr ""
+"Le chemin de base n’est pas indiqué. Utilisation de : --base-path \"/\""
+
+#: data/scripts/cron.php:224
+msgid "No cron tasks are enabled."
+msgstr ""
+
+#: data/scripts/cron.php:282
+#, php-format
+msgid "Cron is starting with %1$d tasks (job: #%2$d, reference: %3$s)."
+msgstr ""
+
+#: data/scripts/cron.php:284
+#, php-format
+msgid "Cron is starting with %1$d tasks (reference: %2$s)."
+msgstr ""
+
+#: data/scripts/cron.php:286
+#, php-format
+msgid "Cron is starting with %1$d tasks (job: #%2$d)."
+msgstr ""
+
+#: data/scripts/cron.php:288
+#, php-format
+msgid "Cron is starting with %d tasks."
+msgstr ""
+
+#: data/scripts/cron.php:307
+#, php-format
+msgid "Cron has an error: %s"
+msgstr ""
+
+#: data/scripts/cron.php:313
+msgid "Cron completed."
+msgstr ""
+
+#: src/Job/CronTasks.php:38
+msgid "No tasks to execute."
+msgstr ""
+
+#: src/Job/CronTasks.php:43
+msgid "Starting cron execution with {count} tasks."
+msgstr ""
+
+#: src/Job/CronTasks.php:52
+msgid "Job stopped by user."
+msgstr ""
+
+#: src/Job/CronTasks.php:62
+msgid "Error executing task \"{task}\": {error}"
+msgstr ""
+
+#: src/Job/CronTasks.php:69
+msgid "Cron execution completed: {executed} tasks executed, {errors} errors."
+msgstr ""
+
+#: src/Job/CronTasks.php:82
+msgid "Executing task \"{task}\"."
+msgstr ""
+
+#: src/Job/CronTasks.php:114
+msgid "Task \"{task}\" has no handler."
+msgstr ""
+
+#: src/Form/CronForm.php:65
+msgid "Scheduled tasks"
+msgstr ""
+
+#: src/Form/CronForm.php:79
+msgid "Hourly"
+msgstr ""
+
+#: src/Form/CronForm.php:80
+msgid "Daily (recommended)"
+msgstr ""
+
+#: src/Form/CronForm.php:81
+msgid "Weekly"
+msgstr ""
+
+#: src/Form/CronForm.php:82
+msgid "Monthly"
+msgstr ""
+
+#: src/Controller/Admin/CronController.php:79
+#, php-format
+msgid "%d tasks defined to be run regularly."
+msgstr ""
+
+#: src/Controller/Admin/CronController.php:84
+msgid "No task defined to be run regularly."
+msgstr ""
+
+#: src/Controller/Admin/CronController.php:110
+msgid "No tasks are enabled."
+msgstr ""
+
+#: src/Controller/Admin/CronController.php:127
+#, php-format
+msgid "Processing cron tasks in background (job %s#%d%s, %slogs%s)."
+msgstr ""
+
+#: config/module.config.php:55
+msgid "Cron"
+msgstr ""
+
+#: config/module.config.php:79
+msgid "daily"
+msgstr ""
