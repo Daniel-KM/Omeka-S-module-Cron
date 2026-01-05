@@ -2,20 +2,18 @@
 
 namespace Cron\Form;
 
-use Laminas\EventManager\Event;
-use Laminas\EventManager\EventManagerAwareTrait;
 use Laminas\Form\Element;
 use Laminas\Form\Form;
 
 /**
  * Cron configuration form.
  *
- * Tasks are registered via event 'cron.tasks'. Each task defines:
- * - id: unique task identifier
+ * Tasks are registered via 'cron_tasks' key in module.config.php.
+ * Each task defines:
+ * - id: unique task identifier (the array key)
  * - label: display name
  * - module: source module name
  * - job: job class to dispatch (optional)
- * - callback: callable for quick inline tasks (optional)
  * - frequencies: supported frequencies ['hourly', 'daily', 'weekly', 'monthly'] (optional)
  * - default_frequency: default frequency (optional, defaults to 'daily')
  * - options: sub-options for configurable tasks (optional)
@@ -28,18 +26,32 @@ use Laminas\Form\Form;
  */
 class CronForm extends Form
 {
-    use EventManagerAwareTrait;
-
     /**
-     * @var array Registered cron tasks from modules
+     * @var array Registered cron tasks from modules config
      */
     protected $registeredTasks = [];
+
+    /**
+     * @var array Cron tasks from merged module config
+     */
+    protected $cronTasksConfig = [];
+
+    /**
+     * Set cron tasks from config.
+     *
+     * Called by the factory with merged config from all modules.
+     */
+    public function setCronTasksConfig(array $cronTasksConfig): self
+    {
+        $this->cronTasksConfig = $cronTasksConfig;
+        return $this;
+    }
 
     public function init(): void
     {
         $this->setAttribute('id', 'form-cron');
 
-        // Collect tasks from modules via event.
+        // Collect tasks from config.
         $this->collectTasks();
 
         // Build task checkboxes.
@@ -77,10 +89,6 @@ class CronForm extends Form
             ])
         ;
 
-        // Allow modules to add extra elements.
-        $event = new Event('form.add_elements', $this);
-        $this->getEventManager()->triggerEvent($event);
-
         $inputFilter = $this->getInputFilter();
         $inputFilter->add([
             'name' => 'cron_tasks',
@@ -90,44 +98,30 @@ class CronForm extends Form
             'name' => 'cron_frequency',
             'required' => false,
         ]);
-
-        $event = new Event('form.add_input_filters', $this, ['inputFilter' => $inputFilter]);
-        $this->getEventManager()->triggerEvent($event);
     }
 
     /**
-     * Collect cron tasks from all modules via event.
+     * Collect cron tasks from merged module config.
      *
-     * Modules attach to 'cron.tasks' and add their tasks to the
-     * event params['tasks'] array. Example:
+     * Modules register their tasks in their module.config.php under
+     * the 'cron_tasks' key. Example:
      *
-     * $sharedEventManager->attach(
-     *     \Cron\Form\CronForm::class,
-     *     'cron.tasks',
-     *     function ($event) {
-     *         $tasks = $event->getParam('tasks', []);
-     *         $tasks['my_task'] = [
+     * // In module.config.php
+     * return [
+     *     'cron_tasks' => [
+     *         'my_task' => [
      *             'label' => 'My task description',
      *             'module' => 'MyModule',
      *             'job' => \MyModule\Job\MyJob::class,
      *             'frequencies' => ['hourly', 'daily'],
      *             'default_frequency' => 'daily',
-     *         ];
-     *         $event->setParam('tasks', $tasks);
-     *     }
-     * );
+     *         ],
+     *     ],
+     * ];
      */
     protected function collectTasks(): void
     {
-        // Default tasks: none in Cron module itself.
-        // Tasks are registered by other modules (like EasyAdmin for session cleanup).
-        $defaultTasks = [];
-
-        // Collect tasks from other modules via event.
-        $event = new Event('cron.tasks', $this, ['tasks' => $defaultTasks]);
-        $this->getEventManager()->triggerEvent($event);
-
-        $this->registeredTasks = $event->getParam('tasks', $defaultTasks);
+        $this->registeredTasks = $this->cronTasksConfig;
     }
 
     /**
@@ -137,7 +131,6 @@ class CronForm extends Form
     {
         $options = [];
 
-        // TODO Translate label options.
         foreach ($this->registeredTasks as $taskId => $task) {
             $module = $task['module'] ?? 'Unknown';
             $label = $task['label'] ?? $taskId;

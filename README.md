@@ -96,16 +96,14 @@ This is less reliable as it depends on site traffic.
 Registering Tasks (For Developers)
 ----------------------------------
 
-Modules can register their own cron tasks by attaching to the `cron.tasks` event:
+Modules can register their own cron tasks by adding entries to the `cron_tasks`
+key in their `module.config.php`:
 
 ```php
-// In your module's attachListeners() method:
-$sharedEventManager->attach(
-    \Cron\Form\CronForm::class,
-    'cron.tasks',
-    function ($event) {
-        $tasks = $event->getParam('tasks', []);
-        $tasks['my_task_id'] = [
+// In your module's config/module.config.php:
+return [
+    'cron_tasks' => [
+        'my_task_id' => [
             'label' => 'My Task Description', // @translate
             'module' => 'MyModule',
             'job' => \MyModule\Job\MyJob::class, // Optional: job class to dispatch
@@ -115,11 +113,12 @@ $sharedEventManager->attach(
                 'option_1' => 'Option 1 label',
                 'option_2' => 'Option 2 label',
             ],
-        ];
-        $event->setParam('tasks', $tasks);
-    }
-);
+        ],
+    ],
+];
 ```
+
+The Cron module automatically merges `cron_tasks` from all modules' configurations.
 
 To handle task execution, attach to the `cron.execute` event:
 

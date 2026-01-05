@@ -12,13 +12,11 @@ class CronFormFactory implements FactoryInterface
     {
         $form = new CronForm(null, $options ?? []);
 
-        // Set up EventManager with proper identifiers for SharedEventManager.
-        $eventManager = $services->get('EventManager');
-        $eventManager->setIdentifiers([
-            CronForm::class,
-            'Cron\Form\CronForm',
-        ]);
-        $form->setEventManager($eventManager);
+        // Get cron tasks from merged module config.
+        $config = $services->get('Config');
+        $cronTasksConfig = $config['cron_tasks'] ?? [];
+
+        $form->setCronTasksConfig($cronTasksConfig);
 
         return $form;
     }
