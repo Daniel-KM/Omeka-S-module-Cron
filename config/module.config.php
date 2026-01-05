@@ -80,4 +80,22 @@ return [
             ],
         ],
     ],
+    // Tasks registered by modules. Each module adds its tasks here.
+    // Structure:
+    // 'cron_tasks' => [
+    //     'task_id' => [
+    //         'label' => 'Task description', // @translate
+    //         'module' => 'ModuleName',
+    //         'job' => \Module\Job\TaskJob::class, // Optional
+    //         'frequencies' => ['hourly', 'daily'], // Optional
+    //         'default_frequency' => 'daily', // Optional
+    //         'options' => [ // Optional: sub-options for configurable tasks
+    //             'option_id' => 'Option label',
+    //         ],
+    //     ],
+    // ],
+    'cron_tasks' => [
+        // Cron module itself has no default tasks.
+        // Modules like EasyAdmin register their tasks in their own config.
+    ],
 ];

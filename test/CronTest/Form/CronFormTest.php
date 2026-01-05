@@ -62,14 +62,32 @@ class CronFormTest extends AbstractHttpControllerTestCase
     }
 
     /**
-     * Test form triggers cron.tasks event.
+     * Test form can be initialized via FormElementManager without errors.
+     *
+     * This test ensures that form initialization doesn't throw
+     * SharedEventManager errors about empty identifiers.
      */
-    public function testFormTriggersCronTasksEvent(): void
+    public function testFormInitializationViaFormElementManager(): void
     {
         $formElementManager = $this->getService('FormElementManager');
+
+        // This should not throw any exceptions.
         $form = $formElementManager->get(CronForm::class);
+        $form->init();
 
         // After init, registeredTasks should be collected (even if empty).
+        $tasks = $form->getRegisteredTasks();
+        $this->assertIsArray($tasks);
+    }
+
+    /**
+     * Test form collects tasks from config.
+     */
+    public function testFormCollectsTasksFromConfig(): void
+    {
+        $form = $this->getCronForm();
+
+        // Tasks are collected from merged module config.
         $tasks = $form->getRegisteredTasks();
         $this->assertIsArray($tasks);
     }
