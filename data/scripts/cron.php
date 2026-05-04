@@ -134,7 +134,7 @@ $user = null;
 if ($userId) {
     try {
         $user = $entityManager->find(\Omeka\Entity\User::class, $userId);
-    } catch (\Exception $e) {
+    } catch (\Throwable $e) {
         $message = $e->getMessage();
         if (mb_strpos($message, 'could not find driver') !== false) {
             $message = new Message(
@@ -303,7 +303,7 @@ try {
         $job->setPid(null);
         $entityManager->flush();
     }
-} catch (\Exception $e) {
+} catch (\Throwable $e) {
     $message = new Message('Cron has an error: %s', $e->getMessage()); // @translate
     echo $translator->translate($message) . PHP_EOL;
     $logger->err($e);
