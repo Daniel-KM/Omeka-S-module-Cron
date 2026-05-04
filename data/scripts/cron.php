@@ -261,7 +261,7 @@ if ($asTask) {
 
     // Since there is no job id (not persisted), shouldStop() would fail.
     // This dynamic subclass overrides shouldStop() to return false.
-    require_once OMEKA_PATH . '/modules/Cron/src/Job/CronTasks.php';
+    require_once dirname(__DIR__, 2) . '/src/Job/CronTasks.php';
 
     $task = new class($job, $services) extends \Cron\Job\CronTasks {
         public function shouldStop()

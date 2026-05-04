@@ -154,8 +154,8 @@ class CronController extends AbstractActionController
         $basePath = $services->get('ViewHelperManager')->get('BasePath');
 
         // Check for Cron module script (preferred) or EasyAdmin fallback.
-        $cronScript = OMEKA_PATH . '/modules/Cron/data/scripts/cron.php';
-        $easyAdminScript = OMEKA_PATH . '/modules/EasyAdmin/data/scripts/task.php';
+        $cronScript = dirname(__DIR__, 3) . '/data/scripts/cron.php';
+        $easyAdminScript = (is_dir(OMEKA_PATH . '/modules/EasyAdmin') ? OMEKA_PATH . '/modules/EasyAdmin' : OMEKA_PATH . '/composer-addons/modules/EasyAdmin') . '/data/scripts/task.php';
 
         if (file_exists($cronScript)) {
             // Cron module's native script - no --task needed, runs all enabled tasks.
