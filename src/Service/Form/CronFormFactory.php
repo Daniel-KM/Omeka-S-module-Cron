@@ -3,7 +3,7 @@
 namespace Cron\Service\Form;
 
 use Cron\Form\CronForm;
-use Interop\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 use Laminas\ServiceManager\Factory\FactoryInterface;
 
 class CronFormFactory implements FactoryInterface
