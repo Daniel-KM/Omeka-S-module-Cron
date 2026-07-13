@@ -22,6 +22,7 @@ class CronController extends AbstractActionController
 
         // Convert settings to form data.
         $formData = $form->prepareDataFromSettings($cronSettings);
+        $formData['cron_backup_dir'] = $settings->get('cron_backup_dir', '');
         $form->setData($formData);
 
         // Prepare view data.
@@ -63,6 +64,17 @@ class CronController extends AbstractActionController
         $data = $form->getData();
         unset($data['csrf']);
 
+        // Default backup folder: must be an absolute, writable path if set.
+        $backupDir = trim((string) ($data['cron_backup_dir'] ?? ''));
+        if ($backupDir !== '' && !$this->prepareBackupDir($backupDir)) {
+            $this->messenger()->addError(new Message(
+                'The backup folder "%s" must be an absolute, writable path.', // @translate
+                $backupDir
+            ));
+            return $view;
+        }
+        $settings->set('cron_backup_dir', $backupDir);
+
         // Convert form data to settings structure.
         $newSettings = $form->prepareSettingsFromData($data);
         $settings->set('cron', $newSettings);
@@ -87,6 +99,22 @@ class CronController extends AbstractActionController
         $this->messenger()->addSuccess($msg);
 
         return $this->redirect()->toRoute(null, [], true);
+    }
+
+    /**
+     * Check a backup folder: it must be an absolute path and writable (it is
+     * created when missing).
+     */
+    protected function prepareBackupDir(string $dir): bool
+    {
+        // Require an absolute path (unix "/…" or windows "C:\…").
+        if ($dir[0] !== '/' && !preg_match('~^[A-Za-z]:[\\\\/]~', $dir)) {
+            return false;
+        }
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0775, true);
+        }
+        return is_dir($dir) && is_writable($dir);
     }
 
     /**

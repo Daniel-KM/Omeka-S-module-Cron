@@ -87,6 +87,18 @@ class CronForm extends Form
                     'value' => 'daily',
                 ],
             ])
+            ->add([
+                'name' => 'cron_backup_dir',
+                'type' => Element\Text::class,
+                'options' => [
+                    'label' => 'Default backup folder', // @translate
+                    'info' => 'Absolute path where backups are stored by default. Leave empty for "files/backup". The folder must be writable.', // @translate
+                ],
+                'attributes' => [
+                    'id' => 'cron_backup_dir',
+                    'placeholder' => '/path/to/backup', // @translate
+                ],
+            ])
         ;
 
         $inputFilter = $this->getInputFilter();
@@ -96,6 +108,10 @@ class CronForm extends Form
         ]);
         $inputFilter->add([
             'name' => 'cron_frequency',
+            'required' => false,
+        ]);
+        $inputFilter->add([
+            'name' => 'cron_backup_dir',
             'required' => false,
         ]);
     }
