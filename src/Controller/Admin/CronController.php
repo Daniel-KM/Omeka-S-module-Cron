@@ -23,6 +23,7 @@ class CronController extends AbstractActionController
         // Convert settings to form data.
         $formData = $form->prepareDataFromSettings($cronSettings);
         $formData['cron_backup_dir'] = $settings->get('cron_backup_dir', '');
+        $formData['cron_backup_files_dir'] = $settings->get('cron_backup_files_dir', '');
         $form->setData($formData);
 
         // Prepare view data.
@@ -75,6 +76,27 @@ class CronController extends AbstractActionController
         }
         $settings->set('cron_backup_dir', $backupDir);
 
+        // Folder for the "files/" backup: absolute, writable and outside
+        // "files/" (a sub-folder would make the backup archive itself).
+        $backupFilesDir = trim((string) ($data['cron_backup_files_dir'] ?? ''));
+        if ($backupFilesDir !== '') {
+            if (!$this->prepareBackupDir($backupFilesDir)) {
+                $this->messenger()->addError(new Message(
+                    'The files backup folder "%s" must be an absolute, writable path.', // @translate
+                    $backupFilesDir
+                ));
+                return $view;
+            }
+            if ($this->isInsideFilesDir($backupFilesDir)) {
+                $this->messenger()->addError(new Message(
+                    'The files backup folder "%s" must be outside "files/" (not a sub-folder).', // @translate
+                    $backupFilesDir
+                ));
+                return $view;
+            }
+        }
+        $settings->set('cron_backup_files_dir', $backupFilesDir);
+
         // Convert form data to settings structure.
         $newSettings = $form->prepareSettingsFromData($data);
         $settings->set('cron', $newSettings);
@@ -115,6 +137,20 @@ class CronController extends AbstractActionController
             @mkdir($dir, 0775, true);
         }
         return is_dir($dir) && is_writable($dir);
+    }
+
+    /**
+     * Whether a directory is the local "files/" directory or a sub-folder of it
+     * (backing "files/" up into itself would recurse).
+     */
+    protected function isInsideFilesDir(string $dir): bool
+    {
+        $config = $this->getServiceLocator()->get('Config');
+        $filesPath = $config['file_store']['local']['base_path'] ?? null;
+        $filesPath = $filesPath ?: (OMEKA_PATH . '/files');
+        $filesReal = rtrim(realpath($filesPath) ?: $filesPath, '/') . '/';
+        $dirReal = rtrim(realpath($dir) ?: $dir, '/') . '/';
+        return strpos($dirReal, $filesReal) === 0;
     }
 
     /**

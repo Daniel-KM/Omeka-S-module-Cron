@@ -99,6 +99,18 @@ class CronForm extends Form
                     'placeholder' => '/path/to/backup', // @translate
                 ],
             ])
+            ->add([
+                'name' => 'cron_backup_files_dir',
+                'type' => Element\Text::class,
+                'options' => [
+                    'label' => 'Folder for the "files/" backup', // @translate
+                    'info' => 'Absolute path where the "files/" directory is backed up. Leave empty to use the default backup folder. It must be writable and outside "files/" (not a sub-folder, else the backup would archive itself).', // @translate
+                ],
+                'attributes' => [
+                    'id' => 'cron_backup_files_dir',
+                    'placeholder' => '/path/to/files-backup', // @translate
+                ],
+            ])
         ;
 
         $inputFilter = $this->getInputFilter();
@@ -112,6 +124,10 @@ class CronForm extends Form
         ]);
         $inputFilter->add([
             'name' => 'cron_backup_dir',
+            'required' => false,
+        ]);
+        $inputFilter->add([
+            'name' => 'cron_backup_files_dir',
             'required' => false,
         ]);
     }

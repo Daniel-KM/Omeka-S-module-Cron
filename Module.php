@@ -80,6 +80,136 @@ class Module extends AbstractModule
             'view.layout',
             [$this, 'handleCron']
         );
+
+        // Handle the built-in "files/" backup task.
+        $sharedEventManager->attach(
+            \Cron\Job\CronTasks::class,
+            'cron.execute',
+            [$this, 'handleCronExecute']
+        );
+    }
+
+    /**
+     * Execute the module's own cron tasks (currently the "files/" backup).
+     */
+    public function handleCronExecute(Event $event): void
+    {
+        if ($event->getParam('task_id') !== 'backup_files_dir') {
+            return;
+        }
+        $this->backupFiles($event->getParam('logger'));
+        $event->setParam('handled', true);
+    }
+
+    /**
+     * Archive the local "files/" directory into the configured backup folder.
+     *
+     * The destination is the specific files folder, else the default backup
+     * folder, else "files/backup". It must be outside "files/", otherwise the
+     * archive would include itself.
+     *
+     * @param \Laminas\Log\Logger $logger
+     */
+    protected function backupFiles($logger): void
+    {
+        $services = $this->getServiceLocator();
+        $settings = $services->get('Omeka\Settings');
+        $config = $services->get('Config');
+
+        $filesPath = $config['file_store']['local']['base_path'] ?? null;
+        $filesPath = $filesPath ?: (OMEKA_PATH . '/files');
+
+        $dest = trim((string) $settings->get('cron_backup_files_dir', ''))
+            ?: trim((string) $settings->get('cron_backup_dir', ''))
+            ?: ($filesPath . '/backup');
+
+        $filesReal = rtrim(realpath($filesPath) ?: $filesPath, '/') . '/';
+        $destReal = rtrim(realpath($dest) ?: $dest, '/') . '/';
+        if (strpos($destReal, $filesReal) === 0) {
+            $logger->err(
+                'The files backup destination "{path}" is inside "files/". Set a folder outside "files/" in the cron settings.', // @translate
+                ['path' => $dest]
+            );
+            return;
+        }
+
+        if (!is_dir($dest)) {
+            @mkdir($dest, 0775, true);
+        }
+        if (!is_dir($dest) || !is_writable($dest)) {
+            $logger->err(
+                'The files backup destination "{path}" is not writable.', // @translate
+                ['path' => $dest]
+            );
+            return;
+        }
+
+        $tar = $this->findCommandPath('tar');
+        if (!$tar) {
+            $logger->err(
+                'The command "tar" is required to back up the "files/" directory.' // @translate
+            );
+            return;
+        }
+
+        $target = rtrim($dest, '/') . '/files-' . date('Ymd-His') . '.tar.gz';
+        $cmd = sprintf(
+            '%s -czf %s -C %s %s 2>/dev/null',
+            escapeshellcmd($tar),
+            escapeshellarg($target),
+            escapeshellarg(dirname($filesPath)),
+            escapeshellarg(basename($filesPath))
+        );
+
+        $logger->info('Backing up "files/" to {path}…', ['path' => $target]); // @translate
+
+        $exitCode = null;
+        @exec($cmd, $out, $exitCode);
+        if ($exitCode === 0 && file_exists($target) && filesize($target) > 0) {
+            $logger->notice(
+                'Backup of "files/" completed: {path} ({size} bytes).', // @translate
+                ['path' => $target, 'size' => number_format((int) filesize($target), 0, '.', ' ')]
+            );
+        } else {
+            $logger->err(
+                'Backup of "files/" failed for {path} (exit code {code}).', // @translate
+                ['path' => $target, 'code' => $exitCode]
+            );
+        }
+    }
+
+    /**
+     * Find the path of a command quietly (proc_open, then exec, then
+     * shell_exec), respecting disabled functions, without logging.
+     */
+    protected function findCommandPath(string $command): ?string
+    {
+        $cmd = sprintf('command -v %s 2>/dev/null', escapeshellarg($command));
+        $disabled = array_map('trim', explode(',', (string) ini_get('disable_functions')));
+        $available = function ($name) use ($disabled) {
+            return function_exists($name) && !in_array($name, $disabled, true);
+        };
+
+        $output = '';
+        if ($available('proc_open')) {
+            $proc = @proc_open($cmd, [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, getcwd());
+            if (is_resource($proc)) {
+                fclose($pipes[0]);
+                $output = (string) stream_get_contents($pipes[1]);
+                fclose($pipes[1]);
+                fclose($pipes[2]);
+                proc_close($proc);
+            }
+        } elseif ($available('exec')) {
+            $lines = [];
+            @exec($cmd, $lines);
+            $output = implode("\n", $lines);
+        } elseif ($available('shell_exec')) {
+            $output = (string) @shell_exec($cmd);
+        }
+
+        $output = trim($output);
+        return $output === '' ? null : $output;
     }
 
     /**

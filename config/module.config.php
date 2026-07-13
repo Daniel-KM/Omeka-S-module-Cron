@@ -95,7 +95,13 @@ return [
     //     ],
     // ],
     'cron_tasks' => [
-        // Cron module itself has no default tasks.
-        // Modules like EasyAdmin register their tasks in their own config.
+        // Distinct from EasyAdmin's "backup_files" (modules/themes/config):
+        // this one archives the whole local "files/" directory.
+        'backup_files_dir' => [
+            'label' => 'Backup the "files/" directory', // @translate
+            'module' => 'Cron',
+            'frequencies' => ['daily', 'weekly', 'monthly'],
+            'default_frequency' => 'weekly',
+        ],
     ],
 ];
