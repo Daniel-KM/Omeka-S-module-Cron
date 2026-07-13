@@ -19,12 +19,11 @@ class CronController extends AbstractActionController
 
         // Load current settings.
         $cronSettings = $settings->get('cron', []);
-
-        // Convert settings to form data.
-        $formData = $form->prepareDataFromSettings($cronSettings);
-        $formData['cron_backup_dir'] = $settings->get('cron_backup_dir', '');
-        $formData['cron_backup_files_dir'] = $settings->get('cron_backup_files_dir', '');
-        $form->setData($formData);
+        $lastRunByTask = $settings->get('cron_task_last', []);
+        $form->setData([
+            'cron_backup_dir' => $settings->get('cron_backup_dir', ''),
+            'cron_backup_files_dir' => $settings->get('cron_backup_files_dir', ''),
+        ]);
 
         // Prepare view data.
         $lastRun = $settings->get('cron_last');
@@ -41,6 +40,8 @@ class CronController extends AbstractActionController
             'lastRun' => $lastRun,
             'cronCommand' => $cronCommand,
             'registeredTasks' => $form->getRegisteredTasks(),
+            'taskSettings' => $cronSettings['tasks'] ?? [],
+            'lastRunByTask' => is_array($lastRunByTask) ? $lastRunByTask : [],
             'hasEasyAdmin' => $hasEasyAdmin,
         ]);
 
@@ -49,9 +50,13 @@ class CronController extends AbstractActionController
             return $view;
         }
 
-        $params = $request->getPost();
+        $params = $request->getPost()->toArray();
 
-        // Handle "Run now" action.
+        // Per-task "Run now".
+        if (!empty($params['run_task'])) {
+            return $this->runTask((string) $params['run_task']);
+        }
+        // Run all enabled tasks now.
         if (!empty($params['run_now'])) {
             return $this->runNow();
         }
@@ -97,28 +102,94 @@ class CronController extends AbstractActionController
         }
         $settings->set('cron_backup_files_dir', $backupFilesDir);
 
-        // Convert form data to settings structure.
-        $newSettings = $form->prepareSettingsFromData($data);
-        $settings->set('cron', $newSettings);
+        // Build the tasks settings from the posted per-task configuration.
+        $newTasks = $this->buildTasksFromPost($params['cron']['tasks'] ?? [], $form->getRegisteredTasks());
+        $settings->set('cron', ['tasks' => $newTasks]);
 
-        $enabledCount = 0;
-        foreach ($newSettings['tasks'] ?? [] as $taskSettings) {
-            if (!empty($taskSettings['enabled'])) {
-                $enabledCount++;
-            }
-        }
-
-        if ($enabledCount) {
-            $msg = new Message(
-                '%d tasks defined to be run regularly.', // @translate
-                $enabledCount
-            );
-        } else {
-            $msg = new Message(
-                'No task defined to be run regularly.' // @translate
-            );
-        }
+        $msg = count($newTasks)
+            ? new Message('%d tasks defined to be run regularly.', count($newTasks)) // @translate
+            : new Message('No task defined to be run regularly.'); // @translate
         $this->messenger()->addSuccess($msg);
+
+        return $this->redirect()->toRoute(null, [], true);
+    }
+
+    /**
+     * Build the tasks settings (real id + params) from the posted per-task
+     * configuration, validating each value against the task definition.
+     */
+    protected function buildTasksFromPost(array $posted, array $registered): array
+    {
+        $tasks = [];
+        foreach ($registered as $taskId => $task) {
+            $conf = $posted[$taskId] ?? [];
+            if (empty($conf['enabled'])) {
+                continue;
+            }
+            $frequencies = $task['frequencies'] ?? ['hourly', 'daily', 'weekly', 'monthly'];
+            $frequency = $conf['frequency'] ?? ($task['default_frequency'] ?? 'daily');
+            if (!in_array($frequency, $frequencies, true)) {
+                $frequency = $task['default_frequency'] ?? 'daily';
+            }
+            $entry = ['enabled' => true, 'frequency' => $frequency];
+            $params = [];
+            foreach ($task['params'] ?? [] as $key => $definition) {
+                $value = $conf['params'][$key] ?? null;
+                if ($value !== null && isset($definition['options'][$value])) {
+                    $params[$key] = $value;
+                } elseif (isset($definition['default'])) {
+                    $params[$key] = $definition['default'];
+                }
+            }
+            if ($params) {
+                $entry['params'] = $params;
+            }
+            $tasks[$taskId] = $entry;
+        }
+        return $tasks;
+    }
+
+    /**
+     * Run a single enabled task now (per-task "Run now").
+     */
+    protected function runTask(string $taskId)
+    {
+        $services = $this->getServiceLocator();
+        $settings = $services->get('Omeka\Settings');
+        $cronSettings = $settings->get('cron', []);
+        $taskSettings = $cronSettings['tasks'][$taskId] ?? null;
+        if (!$taskSettings) {
+            $this->messenger()->addWarning(new Message(
+                'The task "%s" is not enabled.', // @translate
+                $taskId
+            ));
+            return $this->redirect()->toRoute(null, [], true);
+        }
+
+        $dispatcher = $services->get(\Omeka\Job\Dispatcher::class);
+        $job = $dispatcher->dispatch(\Cron\Job\CronTasks::class, [
+            'tasks' => [$taskId => $taskSettings],
+            'manual' => true,
+        ]);
+
+        $lastRun = $settings->get('cron_task_last', []);
+        if (!is_array($lastRun)) {
+            $lastRun = [];
+        }
+        $lastRun[$taskId] = time();
+        $settings->set('cron_task_last', $lastRun);
+        $settings->set('cron_last', time());
+
+        $urlPlugin = $this->url();
+        $message = new Message(
+            'Running task "%1$s" in background (job %2$s#%3$d%4$s).', // @translate
+            $taskId,
+            sprintf('<a href="%s">', htmlspecialchars($urlPlugin->fromRoute('admin/id', ['controller' => 'job', 'id' => $job->getId()]))),
+            $job->getId(),
+            '</a>'
+        );
+        $message->setEscapeHtml(false);
+        $this->messenger()->addSuccess($message);
 
         return $this->redirect()->toRoute(null, [], true);
     }

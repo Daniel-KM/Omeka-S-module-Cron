@@ -3,4 +3,176 @@
     .cron .no-resources::before {
         content: "\f017"; /* fa-clock */
     }
+
+    /* Master list of tasks (left). */
+    .cron .cron-tasks {
+        margin: 0 0 1em;
+    }
+    .cron .cron-task {
+        margin: 0 0 .3em;
+        border-left: 3px solid #dfdfdf;
+    }
+    .cron .cron-task.enabled {
+        border-left-color: #4a8f3c;
+    }
+    .cron .cron-task.selected {
+        border-left-color: #2f6f9f;
+    }
+    .cron .cron-task.selected > .cron-task-head {
+        background-color: rgba(47, 111, 159, .08);
+    }
+
+    /* The head is a <button> for keyboard a11y; reset native styling. */
+    .cron .cron-task-head {
+        display: block;
+        width: 100%;
+        margin: 0;
+        padding: .4em .6em;
+        border: 0;
+        border-radius: 0;
+        background: none;
+        font: inherit;
+        color: inherit;
+        text-align: left;
+        cursor: pointer;
+    }
+    .cron .cron-task-head:hover {
+        background-color: rgba(0, 0, 0, .04);
+    }
+    .cron .cron-task-head:focus-visible {
+        outline: 2px solid #2f6f9f;
+        outline-offset: -2px;
+    }
+    .cron .cron-task-name {
+        font-weight: bold;
+    }
+    .cron .cron-task-module {
+        margin-left: .5em;
+        padding: 0 .35em;
+        border-radius: 3px;
+        background: #dfdfdf;
+        color: #555;
+        font-size: .82em;
+        vertical-align: middle;
+    }
+    .cron .cron-task-module:empty {
+        display: none;
+    }
+    .cron .cron-task.enabled > .cron-task-head .cron-task-name::after {
+        content: " \25CF";
+        color: #4a8f3c;
+        font-size: .7em;
+        vertical-align: middle;
+    }
+    .cron .cron-task-desc {
+        display: block;
+        color: #666;
+        font-size: .92em;
+    }
+    .cron .cron-task-desc:empty {
+        display: none;
+    }
+
+    /* The config panel lives in the block but is only shown in the sidebar. */
+    .cron .cron-task > .cron-task-config {
+        display: none;
+    }
+    #cron-sidebar .cron-recap-config > .cron-task-config {
+        display: block;
+    }
+
+    /* Config fields in the sidebar. */
+    #cron-sidebar .cron-task-runs {
+        margin: 1em 0;
+        color: #555;
+        font-size: .92em;
+    }
+    #cron-sidebar .cron-task-runs dt {
+        font-weight: bold;
+    }
+    #cron-sidebar .cron-task-runs dd {
+        margin: 0 0 .4em;
+    }
+    #cron-sidebar .cron-task-actions {
+        margin: 1em 0 0;
+    }
+    #cron-sidebar .cron-help h4 {
+        margin: 1em 0 .3em;
+    }
+    #cron-sidebar .cron-command {
+        white-space: pre-wrap;
+        word-break: break-all;
+        padding: .5em;
+        background: #f0f0f0;
+        font-size: .85em;
+    }
+    #cron-sidebar .cron-recap-name {
+        margin-top: 0;
+    }
+    #cron-sidebar .cron-recap-module {
+        margin: 0 0 .3em;
+        color: #555;
+        font-size: .9em;
+    }
+    #cron-sidebar .cron-recap-module:empty {
+        display: none;
+    }
+    #cron-sidebar .cron-recap-desc {
+        color: #555;
+    }
+    #cron-sidebar .cron-recap-desc:empty {
+        display: none;
+    }
+
+    /* Form fields in the sidebar without two columns layout. */
+    #cron-sidebar .field {
+        display: block;
+    }
+    #cron-sidebar .field-meta,
+    #cron-sidebar .inputs {
+        width: 100%;
+    }
+    #cron-sidebar .field-meta {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        padding-right: 0;
+    }
+    #cron-sidebar .field-meta > label {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+    #cron-sidebar .field-meta > .expand {
+        flex: 0 0 auto;
+        margin-left: auto;
+    }
+    #cron-sidebar .field-meta > .collapsible {
+        flex: 0 0 100%;
+    }
+
+    /* Pinned save using the core confirm-main/confirm-panel pattern with fallback for old omeka. */
+    #cron-sidebar .confirm-main {
+        position: absolute;
+        top: 0;
+        bottom: 60px;
+        left: 0;
+        right: 0;
+        overflow-y: auto;
+        padding: 12px 12px 0;
+    }
+    #cron-sidebar .confirm-panel {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 1;
+        padding: 12px;
+        background-color: #f7f7f7;
+        border-top: 1px solid #dfdfdf;
+    }
+    #cron-sidebar .confirm-panel .button {
+        display: block;
+        width: 100%;
+        margin: 0;
+    }
 }

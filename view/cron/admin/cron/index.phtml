@@ -5,80 +5,143 @@
  * @var int|null $lastRun
  * @var string $cronCommand
  * @var array $registeredTasks
+ * @var array $taskSettings
+ * @var array $lastRunByTask
  * @var bool $hasEasyAdmin
  */
 
 $plugins = $this->getHelperPluginManager();
 $i18n = $plugins->get('i18n');
-$translate = $plugins->get('translate');
-$escapeHtml = $plugins->get('escapeHtml');
 $assetUrl = $plugins->get('assetUrl');
-
-$this->headLink()
-    ->appendStylesheet($assetUrl('css/cron.css', 'Cron'));
+$translate = $plugins->get('translate');
+$escape = $plugins->get('escapeHtml');
+$escapeAttr = $plugins->get('escapeHtmlAttr');
 
 $form->prepare();
 
 $this->htmlElement('body')->appendAttribute('class', 'cron browse');
+$this->headLink()->appendStylesheet($assetUrl('css/cron.css', 'Cron'));
+$this->headScript()->appendFile($assetUrl('js/cron.js', 'Cron'), 'text/javascript', ['defer' => 'defer']);
+
+$frequencyLabels = [
+    'hourly' => $translate('Hourly'),
+    'daily' => $translate('Daily'),
+    'weekly' => $translate('Weekly'),
+    'monthly' => $translate('Monthly'),
+];
+$freqSeconds = ['hourly' => 3600, 'daily' => 86400, 'weekly' => 604800, 'monthly' => 2592000];
+$now = time();
+$fmtDate = fn ($ts) => $escape($i18n->dateFormat((new DateTime())->setTimestamp((int) $ts), 'medium', 'short'));
 ?>
 
-<?php if ($hasEasyAdmin): ?>
-    <?= $this->pageTitle($translate('Regular tasks'), 1, $translate('Easy Admin')) ?>
-    <nav class="section-nav">
-        <?= $this->navigation('Laminas\Navigation\EasyAdmin')->menu() ?>
-    </nav>
-<?php else: ?>
-    <?= $this->pageTitle($translate('Scheduled Tasks')) ?>
-<?php endif; ?>
+<?= $this->pageTitle($translate('Regular tasks'), 1, $hasEasyAdmin ? $translate('Easy Admin') : $translate('Cron')) ?>
 
-<?php if (!count($registeredTasks)): ?>
-    <div class="no-resources messages">
-        <p class="warning">
-            <?= $translate('No tasks are registered. Install modules that provide cron tasks, for example EasyAdmin for session cleanup.') ?>
-        </p>
-    </div>
-<?php endif; ?>
-
-<div class="cron-info">
-    <h2><?= $translate('Status') ?></h2>
-    <dl>
-        <dt><?= $translate('Last execution') ?></dt>
-        <dd>
-            <?php if ($lastRun): ?>
-                <?= $escapeHtml($i18n->dateFormat((new DateTime)->setTimestamp($lastRun), 'long', 'medium')) ?>
-            <?php else: ?>
-                <em><?= $translate('Never') ?></em>
-            <?php endif; ?>
-        </dd>
-    </dl>
-</div>
-
-<div class="cron-help">
-    <h2><?= $translate('Server cron command') ?></h2>
-    <p class="explanation">
-        <?= $translate('For best results, configure a server cron job. This ensures tasks run reliably, even when no one visits the site.') ?>
-    </p>
-    <pre class="cron-command"><?= $escapeHtml($cronCommand) ?></pre>
-    <p class="explanation">
-        <?= $translate('Without server cron, tasks will run on page load based on the configured frequency.') ?>
-    </p>
-</div>
+<nav class="section-nav">
+    <?php if ($hasEasyAdmin): ?>
+    <?= $this->navigation('Laminas\Navigation\EasyAdmin')->menu() ?>
+    <?php endif; ?>
+</nav>
 
 <?= $this->form()->openTag($form) ?>
-<div id="page-actions">
-    <?php if (count($registeredTasks)): ?>
-        <button type="submit" name="run_now" value="1" class="button"><?= $translate('Run now') ?></button>
-    <?php endif; ?>
-    <button type="submit" class="button"><?= $translate('Save') ?></button>
+<?php if ($form->has('csrf')): ?><?= $this->formElement($form->get('csrf')) ?><?php endif; ?>
+
+<div class="cron-tasks">
+    <?php foreach ($registeredTasks as $taskId => $task):
+        $conf = $taskSettings[$taskId] ?? [];
+        $enabled = !empty($conf['enabled']);
+        $module = $task['module'] ?? '';
+        $label = $translate($task['label'] ?? $taskId);
+        $desc = isset($task['description']) ? $translate($task['description']) : '';
+        $frequencies = $task['frequencies'] ?? ['hourly', 'daily', 'weekly', 'monthly'];
+        $freq = $conf['frequency'] ?? ($task['default_frequency'] ?? 'daily');
+        $last = (int) ($lastRunByTask[$taskId] ?? 0);
+        $name = 'cron[tasks][' . $taskId . ']';
+    ?>
+    <div class="cron-task<?= $enabled ? ' enabled' : '' ?>" data-task="<?= $escapeAttr($taskId) ?>">
+        <button type="button" class="cron-task-head" aria-pressed="false">
+            <span class="cron-task-name"><?= $escape($label) ?></span>
+            <span class="cron-task-module"><?= $escape($module) ?></span>
+            <span class="cron-task-desc"><?= $escape($desc) ?></span>
+        </button>
+        <div class="cron-task-config" data-task="<?= $escapeAttr($taskId) ?>">
+            <?php $fieldId = 'cron-field-' . preg_replace('/[^A-Za-z0-9_-]/', '-', (string) $taskId); ?>
+            <div class="field cron-field-enabled">
+                <div class="inputs">
+                    <label>
+                        <input type="checkbox" name="<?= $escapeAttr($name) ?>[enabled]" value="1"<?= $enabled ? ' checked' : '' ?>>
+                        <?= $escape($translate('Enabled')) ?>
+                    </label>
+                </div>
+            </div>
+            <div class="field">
+                <div class="field-meta">
+                    <label for="<?= $escapeAttr($fieldId) ?>-frequency"><?= $escape($translate('Frequency')) ?></label>
+                </div>
+                <div class="inputs">
+                    <select id="<?= $escapeAttr($fieldId) ?>-frequency" name="<?= $escapeAttr($name) ?>[frequency]">
+                        <?php foreach ($frequencies as $f): ?>
+                        <option value="<?= $escapeAttr($f) ?>"<?= $f === $freq ? ' selected' : '' ?>><?= $escape($frequencyLabels[$f] ?? $f) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
+            <?php foreach ($task['params'] ?? [] as $key => $definition):
+                $current = $conf['params'][$key] ?? ($definition['default'] ?? null);
+                $paramId = $fieldId . '-param-' . preg_replace('/[^A-Za-z0-9_-]/', '-', (string) $key);
+            ?>
+            <div class="field">
+                <div class="field-meta">
+                    <label for="<?= $escapeAttr($paramId) ?>"><?= $escape($translate($definition['label'] ?? $key)) ?></label>
+                </div>
+                <div class="inputs">
+                    <select id="<?= $escapeAttr($paramId) ?>" name="<?= $escapeAttr($name . '[params][' . $key . ']') ?>">
+                        <?php foreach ($definition['options'] ?? [] as $value => $optLabel): ?>
+                        <option value="<?= $escapeAttr($value) ?>"<?= $value === $current ? ' selected' : '' ?>><?= $escape($translate($optLabel)) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
+            <?php endforeach; ?>
+            <dl class="cron-task-runs">
+                <dt><?= $escape($translate('Last run')) ?></dt>
+                <dd><?= $last ? $fmtDate($last) : '<em>' . $escape($translate('Never')) . '</em>' ?></dd>
+            </dl>
+            <p class="cron-task-actions">
+                <button type="submit" name="run_task" value="<?= $escapeAttr($taskId) ?>" class="button"><?= $escape($translate('Run now')) ?></button>
+            </p>
+        </div>
+    </div>
+    <?php endforeach; ?>
 </div>
 
-<?php if (count($registeredTasks)): ?>
-    <fieldset id="cron-tasks-fieldset">
-        <legend><?= $translate('Task configuration') ?></legend>
-        <?= $this->formCollection($form) ?>
-    </fieldset>
-<?php else: ?>
-    <?= $this->formCollection($form) ?>
-<?php endif; ?>
+<aside class="sidebar always-open" id="cron-sidebar">
+    <div class="confirm-main">
+        <div class="cron-help">
+            <h3><?= $escape($translate('How it works')) ?></h3>
+            <p><?= $escape($translate('Select a task on the left to enable it and set its own frequency and options. Each task runs on its own schedule, independently of the others.')) ?></p>
+            <h4><?= $escape($translate('Cron trigger')) ?></h4>
+            <p><?= $escape($translate('Install this hourly server cron for reliable scheduling; without server access, tasks run on admin page loads instead. The trigger only wakes cron up: each task then runs when its own frequency is due.')) ?></p>
+            <pre class="cron-command"><?= $escape($cronCommand) ?></pre>
+            <dl>
+                <dt><?= $escape($translate('Last execution')) ?></dt>
+                <dd><?= $lastRun ? $fmtDate($lastRun) : '<em>' . $escape($translate('Never')) . '</em>' ?></dd>
+            </dl>
+            <div class="cron-backup-dirs">
+                <h4><?= $escape($translate('Backup folders')) ?></h4>
+                <?= $this->formRow($form->get('cron_backup_dir')) ?>
+                <?= $this->formRow($form->get('cron_backup_files_dir')) ?>
+            </div>
+        </div>
+        <div class="cron-recap" hidden>
+            <h3 class="cron-recap-name"></h3>
+            <p class="cron-recap-module"></p>
+            <p class="cron-recap-desc"></p>
+            <div class="cron-recap-config"></div>
+        </div>
+    </div>
+    <div class="confirm-panel">
+        <button type="submit" class="button"><?= $escape($translate('Save')) ?></button>
+    </div>
+</aside>
 
 <?= $this->form()->closeTag() ?>
