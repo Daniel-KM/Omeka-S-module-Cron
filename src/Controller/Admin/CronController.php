@@ -183,8 +183,17 @@ class CronController extends AbstractActionController
             'manual' => true,
         ]);
 
-        // Update last run time.
-        $settings->set('cron_last', time());
+        // Update last run time, overall and per task (manual run of all).
+        $now = time();
+        $lastRun = $settings->get('cron_task_last', []);
+        if (!is_array($lastRun)) {
+            $lastRun = [];
+        }
+        foreach (array_keys($enabledTasks) as $taskId) {
+            $lastRun[$taskId] = $now;
+        }
+        $settings->set('cron_task_last', $lastRun);
+        $settings->set('cron_last', $now);
 
         $urlPlugin = $this->url();
         $message = new Message(
@@ -224,7 +233,7 @@ class CronController extends AbstractActionController
         if (file_exists($cronScript)) {
             // Cron module's native script - no --task needed, runs all enabled tasks.
             return sprintf(
-                '0 0 * * * php %s --user-id=1 --server-url="%s" --base-path="%s"',
+                '0 * * * * php %s --user-id=1 --server-url="%s" --base-path="%s"',
                 $cronScript,
                 rtrim($serverUrl(), '/'),
                 $basePath()
@@ -232,7 +241,7 @@ class CronController extends AbstractActionController
         } elseif (file_exists($easyAdminScript)) {
             // Fallback to EasyAdmin's task.php - requires --task argument.
             return sprintf(
-                '0 0 * * * php %s --task="Cron\\Job\\CronTasks" --user-id=1 --server-url="%s" --base-path="%s"',
+                '0 * * * * php %s --task="Cron\\Job\\CronTasks" --user-id=1 --server-url="%s" --base-path="%s"',
                 $easyAdminScript,
                 rtrim($serverUrl(), '/'),
                 $basePath()
@@ -240,7 +249,7 @@ class CronController extends AbstractActionController
         } else {
             // No script available - suggest the native cron script path.
             return sprintf(
-                '0 0 * * * php %s --user-id=1 --server-url="%s" --base-path="%s"',
+                '0 * * * * php %s --user-id=1 --server-url="%s" --base-path="%s"',
                 $cronScript,
                 rtrim($serverUrl(), '/'),
                 $basePath()

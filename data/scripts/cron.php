@@ -231,9 +231,28 @@ if (!count($enabledTasks)) {
     exit();
 }
 
+// Run only the tasks due according to each task's own frequency.
+require_once dirname(__DIR__, 2) . '/src/Job/CronTasks.php';
+$now = time();
+$lastRun = $settings->get('cron_task_last', []);
+if (!is_array($lastRun)) {
+    $lastRun = [];
+}
+$dueTasks = \Cron\Job\CronTasks::filterDueTasks($enabledTasks, $lastRun, $now);
+if (!count($dueTasks)) {
+    $message = new Message('No cron tasks are due.'); // @translate
+    echo $translator->translate($message) . PHP_EOL;
+    $logger->notice($message);
+    exit();
+}
+foreach (array_keys($dueTasks) as $taskId) {
+    $lastRun[$taskId] = $now;
+}
+$settings->set('cron_task_last', $lastRun);
+
 // Merge enabled tasks with any additional args.
 $finalArgs = array_merge($jobArgs, [
-    'tasks' => $enabledTasks,
+    'tasks' => $dueTasks,
     'manual' => false,
 ]);
 

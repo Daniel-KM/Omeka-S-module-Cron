@@ -236,28 +236,28 @@ class Module extends AbstractModule
             return;
         }
 
-        // Check frequency based on global setting.
-        $frequency = $cronSettings['global_frequency'] ?? 'daily';
-        $frequencies = [
-            'hourly' => 3600,
-            'daily' => 86400,
-            'weekly' => 604800,
-            'monthly' => 2592000,
-            'default' => 86400,
-        ];
-        $frequencySeconds =$frequencies[$frequency] ?? $frequencies['default'];
-
-        $lastCron = (int) $settings->get('cron_last');
-        $time = time();
-        if ($lastCron + $frequencySeconds > $time) {
+        // Run only the tasks due according to each task's own frequency. The
+        // per-task last run naturally throttles: a daily task is not due again
+        // for 24h, so no global throttle is needed here.
+        $now = time();
+        $lastRun = $settings->get('cron_task_last', []);
+        $due = \Cron\Job\CronTasks::filterDueTasks($enabledTasks, is_array($lastRun) ? $lastRun : [], $now);
+        if (!count($due)) {
             return;
         }
-        $settings->set('cron_last', $time);
 
-        // Dispatch all tasks to the CronTasks job.
+        // Stamp now, so concurrent page loads do not dispatch duplicate jobs.
+        foreach (array_keys($due) as $taskId) {
+            $lastRun[$taskId] = $now;
+        }
+        $settings->set('cron_task_last', $lastRun);
+        $settings->set('cron_last', $now);
+
+        // Dispatch the due tasks to the background job (does not block the
+        // page).
         $dispatcher = $services->get(\Omeka\Job\Dispatcher::class);
         $dispatcher->dispatch(\Cron\Job\CronTasks::class, [
-            'tasks' => $enabledTasks,
+            'tasks' => $due,
             'manual' => false,
         ]);
     }

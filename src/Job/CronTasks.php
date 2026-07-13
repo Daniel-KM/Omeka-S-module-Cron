@@ -20,6 +20,40 @@ class CronTasks extends AbstractJob
      */
     protected $logger;
 
+    /**
+     * Frequency of a task in seconds.
+     */
+    public static function freqSeconds(?string $frequency): int
+    {
+        $map = [
+            'hourly' => 3600,
+            'daily' => 86400,
+            'weekly' => 604800,
+            'monthly' => 2592000,
+        ];
+        return $map[$frequency] ?? $map['daily'];
+    }
+
+    /**
+     * Keep only the tasks due to run now, according to each task's own
+     * frequency and last run time.
+     *
+     * @param array $enabledTasks taskId => ['frequency' => …, …]
+     * @param array $lastRun taskId => unix timestamp of the last run
+     * @return array The due subset of $enabledTasks.
+     */
+    public static function filterDueTasks(array $enabledTasks, array $lastRun, int $now): array
+    {
+        $due = [];
+        foreach ($enabledTasks as $taskId => $taskSettings) {
+            $last = (int) ($lastRun[$taskId] ?? 0);
+            if ($now >= $last + self::freqSeconds($taskSettings['frequency'] ?? null)) {
+                $due[$taskId] = $taskSettings;
+            }
+        }
+        return $due;
+    }
+
     public function perform(): void
     {
         $services = $this->getServiceLocator();
