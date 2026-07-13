@@ -55,6 +55,77 @@ class Module extends AbstractModule
         return include __DIR__ . '/config/module.config.php';
     }
 
+    public function install(\Laminas\ServiceManager\ServiceLocatorInterface $services): void
+    {
+        $this->requireEasyAdminVersion($services);
+    }
+
+    public function upgrade($oldVersion, $newVersion, \Laminas\ServiceManager\ServiceLocatorInterface $services): void
+    {
+        // The new cron task model (real id + params) is shared with EasyAdmin.
+        $this->requireEasyAdminVersion($services);
+
+        $settings = $services->get('Omeka\Settings');
+
+        if (version_compare($oldVersion, '3.4.3', '<')) {
+            // Migrate cron tasks from flattened ids ("session_8d") to real ids
+            // plus a clean params map ("session" + {age: "8d"}).
+            $cronSettings = $settings->get('cron', []);
+            if (!empty($cronSettings['tasks'])) {
+                $migrated = [];
+                foreach ($cronSettings['tasks'] as $taskId => $conf) {
+                    [$realId, $params] = $this->migrateCronTaskId((string) $taskId);
+                    $entry = is_array($conf) ? $conf : ['enabled' => true];
+                    unset($entry['parent_task']);
+                    if ($params) {
+                        $entry['params'] = $params;
+                    }
+                    $migrated[$realId] = $entry;
+                }
+                $cronSettings['tasks'] = $migrated;
+                $settings->set('cron', $cronSettings);
+            }
+        }
+    }
+
+    /**
+     * Block install/upgrade when EasyAdmin is active but too old for the shared
+     * cron task model.
+     */
+    protected function requireEasyAdminVersion(\Laminas\ServiceManager\ServiceLocatorInterface $services): void
+    {
+        $module = $services->get('Omeka\ModuleManager')->getModule('EasyAdmin');
+        if (!$module || $module->getState() !== \Omeka\Module\Manager::STATE_ACTIVE) {
+            return;
+        }
+        $version = $module->getIni('version');
+        if ($version && version_compare($version, '3.4.46', '<')) {
+            throw new \Omeka\Module\Exception\ModuleCannotInstallException(sprintf(
+                'The module EasyAdmin should be upgraded to version %s or later.', // @translate
+                '3.4.46'
+            ));
+        }
+    }
+
+    /**
+     * Map a legacy flattened cron task id to a real id and a clean params map.
+     *
+     * @return array{0: string, 1: array}
+     */
+    protected function migrateCronTaskId(string $taskId): array
+    {
+        if (strncmp($taskId, 'session_', 8) === 0) {
+            return ['session', ['age' => substr($taskId, 8)]];
+        }
+        if ($taskId === 'backup_db_compressed' || $taskId === 'backup_db_plain') {
+            return ['backup_database', ['format' => substr($taskId, 10)]];
+        }
+        if ($taskId === 'backup_files_full' || $taskId === 'backup_files_config') {
+            return ['backup_files', ['scope' => substr($taskId, 13)]];
+        }
+        return [$taskId, []];
+    }
+
     public function onBootstrap(MvcEvent $event): void
     {
         parent::onBootstrap($event);
