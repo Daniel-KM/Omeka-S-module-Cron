@@ -16,7 +16,7 @@ use Laminas\Form\Form;
  * The per-task configuration (enabled, frequency, params) is rendered by the
  * view as plain inputs "cron[tasks][taskId][…]" and read from the post by the
  * controller (master-detail sidebar ui). This form only holds the csrf token
- * and the backup folders.
+ * and the backup folder.
  */
 class CronForm extends Form
 {
@@ -40,23 +40,11 @@ class CronForm extends Form
 
         $this
             ->add([
-                'name' => 'cron_backup_dir',
-                'type' => Element\Text::class,
-                'options' => [
-                    'label' => 'Default backup folder', // @translate
-                    'info' => 'Absolute path where backups are stored by default. Leave empty for "files/backup". The folder must be writable.', // @translate
-                ],
-                'attributes' => [
-                    'id' => 'cron_backup_dir',
-                    'placeholder' => '/path/to/backup', // @translate
-                ],
-            ])
-            ->add([
                 'name' => 'cron_backup_files_dir',
                 'type' => Element\Text::class,
                 'options' => [
                     'label' => 'Folder for the "files/" backup', // @translate
-                    'info' => 'Absolute path where the "files/" directory is backed up. Leave empty to use the default backup folder. It must be writable and outside "files/" (not a sub-folder, else the backup would archive itself).', // @translate
+                    'info' => 'Absolute path where the task archives the "files/" directory. It is required to run the task. It must be writable and outside the directory of Omeka: inside "files/", the archive would include itself, and elsewhere in Omeka, it may be downloadable from the web.', // @translate
                 ],
                 'attributes' => [
                     'id' => 'cron_backup_files_dir',
@@ -66,10 +54,6 @@ class CronForm extends Form
         ;
 
         $inputFilter = $this->getInputFilter();
-        $inputFilter->add([
-            'name' => 'cron_backup_dir',
-            'required' => false,
-        ]);
         $inputFilter->add([
             'name' => 'cron_backup_files_dir',
             'required' => false,

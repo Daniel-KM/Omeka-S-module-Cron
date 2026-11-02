@@ -21,7 +21,6 @@ class CronController extends AbstractActionController
         $cronSettings = $settings->get('cron', []);
         $lastRunByTask = $settings->get('cron_task_last', []);
         $form->setData([
-            'cron_backup_dir' => $settings->get('cron_backup_dir', ''),
             'cron_backup_files_dir' => $settings->get('cron_backup_files_dir', ''),
         ]);
 
@@ -70,31 +69,22 @@ class CronController extends AbstractActionController
         $data = $form->getData();
         unset($data['csrf']);
 
-        // Default backup folder: must be an absolute, writable path if set.
-        $backupDir = trim((string) ($data['cron_backup_dir'] ?? ''));
-        if ($backupDir !== '' && !$this->prepareBackupDir($backupDir)) {
-            $this->messenger()->addError(new Message(
-                'The backup folder "%s" must be an absolute, writable path.', // @translate
-                $backupDir
-            ));
-            return $view;
-        }
-        $settings->set('cron_backup_dir', $backupDir);
-
-        // Folder for the "files/" backup: absolute, writable and outside
-        // "files/" (a sub-folder would make the backup archive itself).
+        // Folder for the "files/" backup: absolute, writable and outside Omeka
+        // (inside "files/", the backup would archive itself, and elsewhere in
+        // Omeka, it may be downloadable). Checked before creating it.
         $backupFilesDir = trim((string) ($data['cron_backup_files_dir'] ?? ''));
         if ($backupFilesDir !== '') {
-            if (!$this->prepareBackupDir($backupFilesDir)) {
+            $filesPath = $this->getServiceLocator()->get('Config')['file_store']['local']['base_path'] ?? null;
+            if (\Cron\Module::isInsideOmekaDir($backupFilesDir, $filesPath ?: OMEKA_PATH . '/files')) {
                 $this->messenger()->addError(new Message(
-                    'The files backup folder "%s" must be an absolute, writable path.', // @translate
+                    'The files backup folder "%s" must be outside the directory of Omeka and outside "files/".', // @translate
                     $backupFilesDir
                 ));
                 return $view;
             }
-            if ($this->isInsideFilesDir($backupFilesDir)) {
+            if (!$this->prepareBackupDir($backupFilesDir)) {
                 $this->messenger()->addError(new Message(
-                    'The files backup folder "%s" must be outside "files/" (not a sub-folder).', // @translate
+                    'The files backup folder "%s" must be an absolute, writable path.', // @translate
                     $backupFilesDir
                 ));
                 return $view;
@@ -208,20 +198,6 @@ class CronController extends AbstractActionController
             @mkdir($dir, 0775, true);
         }
         return is_dir($dir) && is_writable($dir);
-    }
-
-    /**
-     * Whether a directory is the local "files/" directory or a sub-folder of it
-     * (backing "files/" up into itself would recurse).
-     */
-    protected function isInsideFilesDir(string $dir): bool
-    {
-        $config = $this->getServiceLocator()->get('Config');
-        $filesPath = $config['file_store']['local']['base_path'] ?? null;
-        $filesPath = $filesPath ?: (OMEKA_PATH . '/files');
-        $filesReal = rtrim(realpath($filesPath) ?: $filesPath, '/') . '/';
-        $dirReal = rtrim(realpath($dir) ?: $dir, '/') . '/';
-        return strpos($dirReal, $filesReal) === 0;
     }
 
     /**

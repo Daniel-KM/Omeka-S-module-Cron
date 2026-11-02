@@ -127,8 +127,7 @@ $fmtDate = fn ($ts) => $escape($i18n->dateFormat((new DateTime())->setTimestamp(
                 <dd><?= $lastRun ? $fmtDate($lastRun) : '<em>' . $escape($translate('Never')) . '</em>' ?></dd>
             </dl>
             <div class="cron-backup-dirs">
-                <h4><?= $escape($translate('Backup folders')) ?></h4>
-                <?= $this->formRow($form->get('cron_backup_dir')) ?>
+                <h4><?= $escape($translate('Backup folder')) ?></h4>
                 <?= $this->formRow($form->get('cron_backup_files_dir')) ?>
             </div>
         </div>

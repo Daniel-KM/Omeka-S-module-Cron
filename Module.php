@@ -86,6 +86,16 @@ class Module extends AbstractModule
                 $settings->set('cron', $cronSettings);
             }
         }
+
+        if (version_compare($oldVersion, '3.4.4', '<')) {
+            // The default backup folder was used only as a fallback for the
+            // backup of "files/", so it is merged into the specific folder.
+            $backupDir = trim((string) $settings->get('cron_backup_dir', ''));
+            if ($backupDir !== '' && trim((string) $settings->get('cron_backup_files_dir', '')) === '') {
+                $settings->set('cron_backup_files_dir', $backupDir);
+            }
+            $settings->delete('cron_backup_dir');
+        }
     }
 
     /**
@@ -175,9 +185,9 @@ class Module extends AbstractModule
     /**
      * Archive the local "files/" directory into the configured backup folder.
      *
-     * The destination is the specific files folder, else the default backup
-     * folder, else "files/backup". It must be outside "files/", otherwise the
-     * archive would include itself.
+     * The destination must be set and outside Omeka and "files/": inside
+     * "files/", the archive would include itself, and elsewhere in Omeka, it
+     * may be downloadable from the web.
      *
      * @param \Laminas\Log\Logger $logger
      */
@@ -190,15 +200,17 @@ class Module extends AbstractModule
         $filesPath = $config['file_store']['local']['base_path'] ?? null;
         $filesPath = $filesPath ?: (OMEKA_PATH . '/files');
 
-        $dest = trim((string) $settings->get('cron_backup_files_dir', ''))
-            ?: trim((string) $settings->get('cron_backup_dir', ''))
-            ?: ($filesPath . '/backup');
-
-        $filesReal = rtrim(realpath($filesPath) ?: $filesPath, '/') . '/';
-        $destReal = rtrim(realpath($dest) ?: $dest, '/') . '/';
-        if (strpos($destReal, $filesReal) === 0) {
+        $dest = trim((string) $settings->get('cron_backup_files_dir', ''));
+        if ($dest === '') {
             $logger->err(
-                'The files backup destination "{path}" is inside "files/". Set a folder outside "files/" in the cron settings.', // @translate
+                'No folder is set for the backup of "files/". Set a folder outside Omeka in the cron settings.' // @translate
+            );
+            return;
+        }
+
+        if (static::isInsideOmekaDir($dest, $filesPath)) {
+            $logger->err(
+                'The files backup destination "{path}" is inside Omeka or "files/". Set a folder outside Omeka in the cron settings.', // @translate
                 ['path' => $dest]
             );
             return;
@@ -247,6 +259,30 @@ class Module extends AbstractModule
                 ['path' => $target, 'code' => $exitCode]
             );
         }
+    }
+
+    /**
+     * Whether a directory is inside Omeka or inside "files/", that may be stored
+     * elsewhere.
+     *
+     * The directory may not exist yet, so the path is resolved from its nearest
+     * existing parent.
+     */
+    public static function isInsideOmekaDir(string $dir, string $filesPath): bool
+    {
+        $path = rtrim($dir, '/');
+        $rest = '';
+        while ($path !== '' && !file_exists($path) && dirname($path) !== $path) {
+            $rest = '/' . basename($path) . $rest;
+            $path = dirname($path);
+        }
+        $dirReal = rtrim(rtrim(realpath($path) ?: $path, '/') . $rest, '/') . '/';
+        foreach ([OMEKA_PATH, $filesPath] as $parent) {
+            if (strpos($dirReal, rtrim(realpath($parent) ?: $parent, '/') . '/') === 0) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
