@@ -86,11 +86,15 @@ return [
     //     'task_id' => [
     //         'label' => 'Task description', // @translate
     //         'module' => 'ModuleName',
-    //         'job' => \Module\Job\TaskJob::class, // Optional
+    //         'description' => 'Task details', // @translate Optional
     //         'frequencies' => ['hourly', 'daily'], // Optional
     //         'default_frequency' => 'daily', // Optional
-    //         'options' => [ // Optional: sub-options for configurable tasks
-    //             'option_id' => 'Option label',
+    //         'params' => [ // Optional: each param is a select
+    //             'param_id' => [
+    //                 'label' => 'Param label', // @translate
+    //                 'options' => ['value' => 'Value label'], // @translate
+    //                 'default' => 'value',
+    //             ],
     //         ],
     //     ],
     // ],

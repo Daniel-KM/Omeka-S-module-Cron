@@ -1,8 +1,10 @@
 Cron (module for Omeka S)
 ==========================
 
-> __New versions of this module and calculation samples are available on
-> [GitLab], which is the main repository. Issues should be opened there.__
+> __New versions of this module and support for Omeka S version 3.0 and above
+> are available on [GitLab], which seems to respect users and privacy better
+> than the previous repository.__
+
 
 [Cron] is a module for [Omeka S] that provides a scheduled task system allowing
 modules to register and execute recurring tasks.
@@ -29,7 +31,7 @@ See general end user documentation for [installing a module].
 Download the last release [Cron.zip] from the list of releases, and uncompress
 it in the `modules` directory.
 
-* From the source and calculation samples
+* From the source
 
 If the module was installed from the source, rename the name of the folder of
 the module to `Cron`.
@@ -58,6 +60,11 @@ native script:
 
 The script automatically runs all enabled tasks configured in the admin
 interface.
+
+When the directory of the module is a symbolic link, for example when modules
+are shared between instances, call the script by its path inside the instance
+(`/path/to/omeka/modules/Cron/data/scripts/cron.php`), not by the target of the
+link: the root of Omeka is found from the path used to call the script.
 
 #### Script Options
 
@@ -92,6 +99,17 @@ EasyAdmin's task script instead:
 Without server cron, tasks execute on page load based on configured frequency.
 This is less reliable as it depends on site traffic.
 
+### Backup of the directory "files/"
+
+The task "Backup the "files/" directory" archives the local directory `files/`
+as a `tar.gz` file. The destination folder is set in the cron page and is
+required: it must be an absolute writable path, outside the directory of Omeka
+and outside `files/`. Inside `files/`, the archive would include itself, and
+elsewhere in Omeka, it may be downloadable from the web, with the private files.
+
+The other backups (database, modules, themes, config) are managed by the module
+[Easy Admin] and are stored in `files/backup/`.
+
 
 Registering Tasks (For Developers)
 ----------------------------------
@@ -106,12 +124,19 @@ return [
         'my_task_id' => [
             'label' => 'My Task Description', // @translate
             'module' => 'MyModule',
-            'job' => \MyModule\Job\MyJob::class, // Optional: job class to dispatch
+            'description' => 'What the task does.', // @translate Optional
             'frequencies' => ['hourly', 'daily', 'weekly'], // Optional: supported frequencies
             'default_frequency' => 'daily', // Optional
-            'options' => [ // Optional: sub-options for configurable tasks
-                'option_1' => 'Option 1 label',
-                'option_2' => 'Option 2 label',
+            // Optional: params of the task, each one is a select in the form.
+            'params' => [
+                'age' => [
+                    'label' => 'Age', // @translate
+                    'options' => [
+                        '1d' => 'older than 1 day', // @translate
+                        '1w' => 'older than 1 week', // @translate
+                    ],
+                    'default' => '1d',
+                ],
             ],
         ],
     ],
@@ -129,6 +154,9 @@ $sharedEventManager->attach(
     function ($event) {
         $taskId = $event->getParam('task_id');
         if ($taskId === 'my_task_id') {
+            // The settings of the task: enabled, frequency and params.
+            $taskSettings = $event->getParam('task_settings');
+            $age = $taskSettings['params']['age'] ?? '1d';
             // Execute your task logic here
             $logger = $event->getParam('logger');
             $logger->info('Executing my task...');
@@ -152,10 +180,12 @@ Settings are stored with the key `cron`:
         'task_id' => [
             'enabled' => true,
             'frequency' => 'daily',
+            'params' => [
+                'age' => '1d',
+            ],
         ],
         // ...
     ],
-    'global_frequency' => 'daily',
 ]
 ```
 
@@ -213,6 +243,7 @@ Copyright
 
 [Cron]: https://gitlab.com/Daniel-KM/Omeka-S-module-Cron
 [Omeka S]: https://omeka.org/s
+[Easy Admin]: https://gitlab.com/Daniel-KM/Omeka-S-module-EasyAdmin
 [installing a module]: https://omeka.org/s/docs/user-manual/modules/#installing-modules
 [Cron.zip]: https://gitlab.com/Daniel-KM/Omeka-S-module-Cron/-/releases
 [module issues]: https://gitlab.com/Daniel-KM/Omeka-S-module-Cron/-/issues
