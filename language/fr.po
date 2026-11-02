@@ -1,15 +1,10 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
-#
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-08 10:39+0100\n"
-"PO-Revision-Date: 2026-01-08 10:41+0100\n"
+"POT-Creation-Date: 2026-11-02 00:00+0000\n"
+"PO-Revision-Date: 2026-11-02 00:00+0000\n"
 "Last-Translator: Daniel Berthereau <Daniel.fr@Berthereau.net>\n"
 "Language-Team: \n"
 "Language: fr\n"
@@ -18,53 +13,83 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 3.6\n"
 
-#: view/cron/admin/cron/index.phtml:26
+#: view/cron/admin/cron/index.phtml:27
+msgid "Hourly"
+msgstr "Par heure"
+
+#: view/cron/admin/cron/index.phtml:28
+msgid "Daily"
+msgstr "Par jour"
+
+#: view/cron/admin/cron/index.phtml:29
+msgid "Weekly"
+msgstr "Par semaine"
+
+#: view/cron/admin/cron/index.phtml:30
+msgid "Monthly"
+msgstr "Par mois"
+
+#: view/cron/admin/cron/index.phtml:37
 msgid "Regular tasks"
 msgstr "Tâches régulières"
 
-#: view/cron/admin/cron/index.phtml:26
+#: view/cron/admin/cron/index.phtml:37
 msgid "Easy Admin"
 msgstr "Easy Admin"
 
-#: view/cron/admin/cron/index.phtml:31
-msgid "Scheduled Tasks"
-msgstr ""
-
 #: view/cron/admin/cron/index.phtml:37
-msgid ""
-"No tasks are registered. Install modules that provide cron tasks, for "
-"example EasyAdmin for session cleanup."
-msgstr ""
+msgid "Cron"
+msgstr "Cron"
 
-#: view/cron/admin/cron/index.phtml:45
-msgid "Last execution"
-msgstr ""
+#: view/cron/admin/cron/index.phtml:72
+msgid "Enabled"
+msgstr "Activé"
 
-#: view/cron/admin/cron/index.phtml:57
-msgid "Server cron command"
-msgstr ""
+#: view/cron/admin/cron/index.phtml:106
+msgid "Last run"
+msgstr "Dernier traitement"
 
-#: view/cron/admin/cron/index.phtml:59
-msgid ""
-"For best results, configure a server cron job. This ensures tasks run "
-"reliably, even when no one visits the site."
-msgstr ""
-
-#: view/cron/admin/cron/index.phtml:63
-msgid ""
-"Without server cron, tasks will run on page load based on the configured "
-"frequency."
-msgstr ""
-
-#: view/cron/admin/cron/index.phtml:70
+#: view/cron/admin/cron/index.phtml:110
 msgid "Run now"
-msgstr ""
+msgstr "Lancer maintenant"
 
-#: view/cron/admin/cron/index.phtml:77
-msgid "Task configuration"
-msgstr ""
+#: view/cron/admin/cron/index.phtml:120
+msgid "How it works"
+msgstr "Comment ça marche"
 
-#: data/scripts/cron.php:26
+#: view/cron/admin/cron/index.phtml:121
+msgid ""
+"Select a task on the left to enable it and set its own frequency and "
+"options. Each task runs on its own schedule, independently of the others."
+msgstr ""
+"Choisir une tâche dans la liste de gauche pour l'activer et définir sa "
+"fréquence et ses options. Chaque tâche s'exécute selon son propre "
+"calendrier, indépendamment des autres."
+
+#: view/cron/admin/cron/index.phtml:122
+msgid "Cron trigger"
+msgstr "Déclencheur Cron"
+
+#: view/cron/admin/cron/index.phtml:123
+msgid ""
+"Install this hourly server cron for reliable scheduling; without server "
+"access, tasks run on admin page loads instead. The trigger only wakes cron "
+"up: each task then runs when its own frequency is due."
+msgstr ""
+"Installez ce serveur cron par heure pour planifier les tâches ; en l'absence "
+"d'accès au serveur, les tâches s'exécutent lors du chargement de la page "
+"admin. Le déclencheur se contente de réactiver le cron : chaque tâche "
+"s'exécute ensuite à la fréquence qui lui est propre."
+
+#: view/cron/admin/cron/index.phtml:126
+msgid "Last execution"
+msgstr "Dernière exécution"
+
+#: view/cron/admin/cron/index.phtml:130
+msgid "Backup folder"
+msgstr "Dossier de sauvegarde"
+
+#: data/scripts/cron.php:55
 msgid ""
 "Usage: php modules/Cron/data/scripts/cron.php [arguments]\n"
 "\n"
@@ -92,21 +117,50 @@ msgid ""
 "  -h --help\n"
 "        This help."
 msgstr ""
+"Utilisation : php modules/Cron/data/scripts/cron.php [arguments]\n"
+"\n"
+"Arguments obligatoires :\n"
+"  -u --user-id [#id]\n"
+"        L'id utilisateur Omeka pour les autorisations (généralement 1 pour "
+"l'admin).\n"
+"\n"
+"Arguments recommandés :\n"
+"  -s --server-url [url]\n"
+"        L'url du serveur permettant de générer les url des ressources (par "
+"défaut :\n"
+"        « http://localhost »).\n"
+"\n"
+"  -b --base-path [chemin]\n"
+"        Le chemin permettant de compléter l'url du serveur (par défaut : "
+"« / »).\n"
+"\n"
+"Arguments facultatifs :\n"
+"  -a --args [json]\n"
+"        Arguments supplémentaires pour la tâche cron au format json.\n"
+"\n"
+"  -k --as-task\n"
+"        Exécute la tâche en tant que simple tâche sans créer "
+"d’enregistrement de tâche.\n"
+"        Utile pour les opérations légères et fréquentes.\n"
+"\n"
+"Autres arguments :\n"
+"  -h --help\n"
+"        Cette aide."
 
-#: data/scripts/cron.php:68
+#: data/scripts/cron.php:97
 #, php-format
 msgid "The script \"%s\" must be run from the command line."
 msgstr "Le script « %s » doit être lancé depuis la ligne de commandes."
 
-#: data/scripts/cron.php:104
+#: data/scripts/cron.php:133
 msgid "The job arguments are not a valid json object."
 msgstr "Les arguments de la tâche ne sont pas un objet json valide."
 
-#: data/scripts/cron.php:124
+#: data/scripts/cron.php:153
 msgid "The user id must be set and exist."
 msgstr "L’id de l’utilisateur doit être indiqué et exister."
 
-#: data/scripts/cron.php:141
+#: data/scripts/cron.php:170
 msgid ""
 "Database is not available. Check if php-mysql is installed with the php "
 "version available on cli."
@@ -114,129 +168,244 @@ msgstr ""
 "Les bases de données ne sont pas disponibles. Vérifiez si php-mysql est "
 "installé avec la version php utilisée en ligne de commandes."
 
-#: data/scripts/cron.php:145
+#: data/scripts/cron.php:174
 msgid "The database does not exist."
 msgstr "La base de données n’existe pas."
 
-#: data/scripts/cron.php:154
+#: data/scripts/cron.php:183
 #, php-format
 msgid "The user #%d does not exist."
-msgstr ""
+msgstr "L'utilisateur #%d n'existe pas."
 
-#: data/scripts/cron.php:172
+#: data/scripts/cron.php:201
 msgid "No server url passed, so use: --server-url \"http://localhost\""
 msgstr ""
-"L’url du serveur n’est pas indiquée. Utilisation de : --server-url "
-"\"http://localhost\""
+"L’url du serveur n’est pas indiquée. Utilisation de : --server-url \"http://"
+"localhost\""
 
-#: data/scripts/cron.php:181
+#: data/scripts/cron.php:210
 msgid "No base path passed, so use: --base-path \"/\""
 msgstr ""
 "Le chemin de base n’est pas indiqué. Utilisation de : --base-path \"/\""
 
-#: data/scripts/cron.php:224
-msgid "No cron tasks are enabled."
-msgstr ""
+#: data/scripts/cron.php:218
+msgid "Invalid server URL given; use --server-url <scheme://host>"
+msgstr "Url du serveur incorrecte ; utiliser : --server-url <scheme://host>"
 
-#: data/scripts/cron.php:282
+#: data/scripts/cron.php:257
+msgid "No cron tasks are enabled."
+msgstr "Aucune tâche cron n'est activée."
+
+#: data/scripts/cron.php:272
+msgid "No cron tasks are due."
+msgstr "Aucune tâche cron n'est prévue."
+
+#: data/scripts/cron.php:334
 #, php-format
 msgid "Cron is starting with %1$d tasks (job: #%2$d, reference: %3$s)."
-msgstr ""
+msgstr "Cron démarre avec %1$d tâches (tâche n° %2$d, référence : %3$s)."
 
-#: data/scripts/cron.php:284
+#: data/scripts/cron.php:336
 #, php-format
 msgid "Cron is starting with %1$d tasks (reference: %2$s)."
-msgstr ""
+msgstr "Cron démarre avec %1$d tâches (référence : %2$s)."
 
-#: data/scripts/cron.php:286
+#: data/scripts/cron.php:338
 #, php-format
 msgid "Cron is starting with %1$d tasks (job: #%2$d)."
-msgstr ""
+msgstr "Cron démarre avec %1$d tâches (tâche n° %2$d)."
 
-#: data/scripts/cron.php:288
+#: data/scripts/cron.php:340
 #, php-format
 msgid "Cron is starting with %d tasks."
-msgstr ""
+msgstr "Cron démarre avec %d tâches."
 
-#: data/scripts/cron.php:307
+#: data/scripts/cron.php:359
 #, php-format
 msgid "Cron has an error: %s"
-msgstr ""
+msgstr "Cron a eu une erreur : %s"
 
-#: data/scripts/cron.php:313
+#: data/scripts/cron.php:365
 msgid "Cron completed."
-msgstr ""
+msgstr "Cron terminée."
 
-#: src/Job/CronTasks.php:38
+#: Module.php:114
+#, php-format
+msgid "The module EasyAdmin should be upgraded to version %s or later."
+msgstr ""
+"Le module EasyAdmin doit être mis à jour vers la version %s ou une version "
+"ultérieure."
+
+#: Module.php:206
+msgid ""
+"No folder is set for the backup of \"files/\". Set a folder outside Omeka in "
+"the cron settings."
+msgstr ""
+"Aucun dossier n'est défini pour la sauvegarde de « files/ ». Définissez un "
+"dossier situé en dehors d'omeka dans les paramètres de cron."
+
+#: Module.php:213
+msgid ""
+"The files backup destination \"{path}\" is inside Omeka or \"files/\". Set a "
+"folder outside Omeka in the cron settings."
+msgstr ""
+"La destination de sauvegarde des fichiers « {path} » se trouve dans Omeka ou "
+"dans le dossier « files/ ». Définissez un dossier situé en dehors d'Omeka "
+"dans les paramètres de cron."
+
+#: Module.php:224
+msgid "The files backup destination \"{path}\" is not writable."
+msgstr ""
+"La destination de sauvegarde des fichiers « {path} » n'est pas accessible en "
+"écriture."
+
+#: Module.php:233
+msgid "The command \"tar\" is required to back up the \"files/\" directory."
+msgstr ""
+"La commande « tar » est nécessaire pour sauvegarder le dossier « files/ »."
+
+#: Module.php:247
+msgid "path"
+msgstr "chemin"
+
+#: Module.php:253
+msgid "Backup of \"files/\" completed: {path} ({size} bytes)."
+msgstr "Sauvegarde de « files/ » terminée : {path} ({size} octets)."
+
+#: Module.php:258
+msgid "Backup of \"files/\" failed for {path} (exit code {code})."
+msgstr ""
+"Échec de la sauvegarde de « files/ » pour {path} (code de sortie {code})."
+
+#: src/Job/CronTasks.php:72
 msgid "No tasks to execute."
-msgstr ""
+msgstr "Aucune tâche à exécuter."
 
-#: src/Job/CronTasks.php:43
+#: src/Job/CronTasks.php:77
 msgid "Starting cron execution with {count} tasks."
-msgstr ""
+msgstr "Lancement du cron avec {count} tâches."
 
-#: src/Job/CronTasks.php:52
+#: src/Job/CronTasks.php:86
 msgid "Job stopped by user."
-msgstr ""
+msgstr "Tâche interrompue par l’utilisateur."
 
-#: src/Job/CronTasks.php:62
+#: src/Job/CronTasks.php:96
 msgid "Error executing task \"{task}\": {error}"
-msgstr ""
+msgstr "Erreur dans la tâche \"{task}\" : {error}"
 
-#: src/Job/CronTasks.php:69
+#: src/Job/CronTasks.php:103
 msgid "Cron execution completed: {executed} tasks executed, {errors} errors."
 msgstr ""
+"L'exécution du Cron est terminée : {executed} tâches exécutées, {errors} "
+"erreurs."
 
-#: src/Job/CronTasks.php:82
+#: src/Job/CronTasks.php:116
 msgid "Executing task \"{task}\"."
-msgstr ""
+msgstr "Exécution de la tâche \"{task}\"."
 
-#: src/Job/CronTasks.php:114
+#: src/Job/CronTasks.php:148
 msgid "Task \"{task}\" has no handler."
-msgstr ""
+msgstr "Tâche « {task} » n’a pas de gestionnaire."
 
-#: src/Form/CronForm.php:65
-msgid "Scheduled tasks"
-msgstr ""
+#: src/Form/CronForm.php:46
+msgid "Folder for the \"files/\" backup"
+msgstr "Dossier pour la sauvegarde de « files/ »"
 
-#: src/Form/CronForm.php:79
-msgid "Hourly"
+#: src/Form/CronForm.php:47
+msgid ""
+"Absolute path where the task archives the \"files/\" directory. It is "
+"required to run the task. It must be writable and outside the directory of "
+"Omeka: inside \"files/\", the archive would include itself, and elsewhere in "
+"Omeka, it may be downloadable from the web."
 msgstr ""
+"Chemin absolu dans lequel la tâche archive le dossier \"files/\". Il doit "
+"être défini pour lancer la tâche. Il doit être inscriptible et en dehors du "
+"dossier Omeka : dans le dossier \"files/\", l’archive s’inclurait elle-même "
+"et ailleurs dans Omeka, elle serait téléchargeable d'internet."
 
-#: src/Form/CronForm.php:80
-msgid "Daily (recommended)"
+#: src/Form/CronForm.php:51
+msgid "/path/to/files-backup"
+msgstr "/chemin/vers/la-sauvegarde-des-fichiers"
+
+#: src/Controller/Admin/CronController.php:80
+#, php-format
+msgid ""
+"The files backup folder \"%s\" must be outside the directory of Omeka and "
+"outside \"files/\"."
 msgstr ""
+"Le dossier de sauvegarde des fichiers « %s » doit se trouver en dehors "
+"d'Omeka et du dossier « files/ »."
 
-#: src/Form/CronForm.php:81
-msgid "Weekly"
+#: src/Controller/Admin/CronController.php:87
+#, php-format
+msgid "The files backup folder \"%s\" must be an absolute, writable path."
 msgstr ""
+"Le dossier de sauvegarde des fichiers « %s » doit être un chemin d'accès "
+"absolu et accessible en écriture."
 
-#: src/Form/CronForm.php:82
-msgid "Monthly"
-msgstr ""
-
-#: src/Controller/Admin/CronController.php:79
+#: src/Controller/Admin/CronController.php:100
 #, php-format
 msgid "%d tasks defined to be run regularly."
-msgstr ""
+msgstr "%d tâches ont été définies pour être exécutées régulièrement."
 
-#: src/Controller/Admin/CronController.php:84
+#: src/Controller/Admin/CronController.php:101
 msgid "No task defined to be run regularly."
-msgstr ""
+msgstr "Aucune tâche programmée."
 
-#: src/Controller/Admin/CronController.php:110
+#: src/Controller/Admin/CronController.php:153
+#, php-format
+msgid "The task \"%s\" is not enabled."
+msgstr "La tâche « %s » n'est pas activée."
+
+#: src/Controller/Admin/CronController.php:175
+#, php-format
+msgid "Running task \"%1$s\" in background (job %2$s#%3$d%4$s)."
+msgstr "Exécution de la tâche « %1$s » en arrière-plan (tâche %2$s#%3$d%4$s)."
+
+#: src/Controller/Admin/CronController.php:221
 msgid "No tasks are enabled."
-msgstr ""
+msgstr "Aucune tâche active."
 
-#: src/Controller/Admin/CronController.php:127
+#: src/Controller/Admin/CronController.php:247
 #, php-format
 msgid "Processing cron tasks in background (job %s#%d%s, %slogs%s)."
 msgstr ""
-
-#: config/module.config.php:55
-msgid "Cron"
-msgstr ""
+"Traitement des tâches cron en arrière-plan (tâche %s#%d%s, %sjournaux%s)."
 
 #: config/module.config.php:79
 msgid "daily"
-msgstr ""
+msgstr "par jour"
+
+#: config/module.config.php:105
+msgid "Backup the \"files/\" directory"
+msgstr "Sauvegarder le dossier « files/ »"
+
+#~ msgid "Default backup folder"
+#~ msgstr "Dossier de sauvegarde par défaut"
+
+#~ msgid ""
+#~ "Absolute path where backups are stored by default. Leave empty for "
+#~ "\"files/backup\". The folder must be writable."
+#~ msgstr ""
+#~ "Chemin d'accès absolu où les sauvegardes sont stockées par défaut. "
+#~ "Laisser vide pour utiliser le dossier « files/backup ». Le dossier doit "
+#~ "être accessible en écriture."
+
+#~ msgid "/path/to/backup"
+#~ msgstr "/chemin/vers/la/sauvegarde"
+
+#~ msgid ""
+#~ "Absolute path where the \"files/\" directory is backed up. Leave empty to "
+#~ "use the default backup folder. It must be writable and outside \"files/\" "
+#~ "(not a sub-folder, else the backup would archive itself)."
+#~ msgstr ""
+#~ "Chemin absolu pour la sauvegarde de « files/ ». Laisser vide pour "
+#~ "utiliser le dossier par défaut. Ce répertoire doit être accessible en "
+#~ "écriture et situé en dehors de « files/ » (il ne doit pas s'agir d'un "
+#~ "sous-dossier, sinon la sauvegarde se sauvegarderait elle-même)."
+
+#, php-format
+#~ msgid "The backup folder \"%s\" must be an absolute, writable path."
+#~ msgstr ""
+#~ "Le dossier de sauvegarde « %s » doit être un chemin d'accès absolu et "
+#~ "accessible en écriture."
