@@ -298,7 +298,15 @@ class CronController extends AbstractActionController
         $basePath = $services->get('ViewHelperManager')->get('BasePath');
 
         // Check for Cron module script (preferred) or EasyAdmin fallback.
-        $cronScript = dirname(__DIR__, 3) . '/data/scripts/cron.php';
+        // The paths are not resolved: the directory of the module may be a
+        // symbolic link, for example when modules are shared between
+        // instances, and the scripts find the root of Omeka from the path used
+        // to call them.
+        $cronScript = is_file(OMEKA_PATH . '/modules/Cron/data/scripts/cron.php')
+            ? OMEKA_PATH . '/modules/Cron/data/scripts/cron.php'
+            : (is_file(OMEKA_PATH . '/composer-addons/modules/Cron/data/scripts/cron.php')
+                ? OMEKA_PATH . '/composer-addons/modules/Cron/data/scripts/cron.php'
+                : dirname(__DIR__, 3) . '/data/scripts/cron.php');
         $easyAdminScript = (is_dir(OMEKA_PATH . '/modules/EasyAdmin') ? OMEKA_PATH . '/modules/EasyAdmin' : OMEKA_PATH . '/composer-addons/modules/EasyAdmin') . '/data/scripts/task.php';
 
         if (file_exists($cronScript)) {
