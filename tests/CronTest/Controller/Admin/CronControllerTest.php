@@ -75,18 +75,20 @@ class CronControllerTest extends AbstractHttpControllerTestCase
         $this->dispatch('/admin/cron');
 
         $this->assertResponseStatusCode(200);
-        $this->assertQuery('form#form-cron');
+        $this->assertQuery('form#cron-form');
     }
 
     /**
-     * Test index page renders frequency radio options.
+     * Test index page renders each registered task with its frequency.
      */
-    public function testIndexPageRendersFrequencyOptions(): void
+    public function testIndexPageRendersTasks(): void
     {
         $this->dispatch('/admin/cron');
 
         $this->assertResponseStatusCode(200);
-        $this->assertQuery('input[name="cron_frequency"]');
+        $this->assertQuery('.cron-task[data-task="backup_files_dir"]');
+        $this->assertQuery('input[name="cron[tasks][backup_files_dir][enabled]"]');
+        $this->assertQuery('select[name="cron[tasks][backup_files_dir][frequency]"]');
     }
 
     /**
@@ -101,14 +103,49 @@ class CronControllerTest extends AbstractHttpControllerTestCase
     }
 
     /**
-     * Test index page shows status section.
+     * Test index page shows the help and the backup folder in the sidebar.
      */
-    public function testIndexPageShowsStatusSection(): void
+    public function testIndexPageShowsSidebar(): void
     {
         $this->dispatch('/admin/cron');
 
         $this->assertResponseStatusCode(200);
-        $this->assertQuery('.cron-info');
+        $this->assertQuery('#cron-sidebar .cron-help');
+        $this->assertQuery('#cron-sidebar input[name="cron_backup_files_dir"]');
+        $this->assertNotQuery('input[name="cron_backup_dir"]');
+    }
+
+    /**
+     * Test the tasks built from the post keep only the enabled ones, with a
+     * valid frequency and valid params.
+     */
+    public function testBuildTasksFromPost(): void
+    {
+        $registered = [
+            'daily_only' => ['frequencies' => ['daily'], 'default_frequency' => 'daily'],
+            'with_params' => [
+                'params' => [
+                    'age' => ['options' => ['1h' => '1 hour', '1d' => '1 day'], 'default' => '1d'],
+                    'format' => ['options' => ['zip' => 'Zip'], 'default' => 'zip'],
+                ],
+            ],
+            'disabled' => [],
+        ];
+        $posted = [
+            'daily_only' => ['enabled' => '1', 'frequency' => 'hourly'],
+            'with_params' => ['enabled' => '1', 'frequency' => 'weekly', 'params' => ['age' => '1h', 'format' => 'unknown']],
+            'disabled' => ['frequency' => 'daily'],
+            'unregistered' => ['enabled' => '1'],
+        ];
+
+        $controller = $this->getServiceLocator()->get('ControllerManager')->get(CronController::class);
+        $method = new \ReflectionMethod($controller, 'buildTasksFromPost');
+        $method->setAccessible(true);
+
+        $this->assertSame([
+            'daily_only' => ['enabled' => true, 'frequency' => 'daily'],
+            'with_params' => ['enabled' => true, 'frequency' => 'weekly', 'params' => ['age' => '1h', 'format' => 'zip']],
+        ], $method->invoke($controller, $posted, $registered));
     }
 
     /**
