@@ -26,6 +26,10 @@ Installation
 
 See general end user documentation for [installing a module].
 
+With big bases or on shared hosts, it is recommended to install the optional
+module [Job Queue] to avoid to overload the server when indexing or backuping
+data.
+
 * From the zip
 
 Download the last release [Cron.zip] from the list of releases, and uncompress
@@ -36,7 +40,7 @@ it in the `modules` directory.
 If the module was installed from the source, rename the name of the folder of
 the module to `Cron`.
 
-- For test
+* For test
 
 The module includes a comprehensive test suite with unit and functional tests.
 Run them from the root of Omeka:
@@ -251,5 +255,6 @@ Copyright
 [GNU/GPL]: https://www.gnu.org/licenses/gpl-3.0.html
 [FSF]: https://www.fsf.org
 [OSI]: http://opensource.org
+[Job Queue]: https://gitlab.com/Daniel-KM/Omeka-S-module-JobQueue
 [GitLab]: https://gitlab.com/Daniel-KM
 [Daniel-KM]: https://gitlab.com/Daniel-KM "Daniel Berthereau"
